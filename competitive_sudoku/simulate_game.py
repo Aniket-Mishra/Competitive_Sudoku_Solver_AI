@@ -30,7 +30,9 @@ from competitive_sudoku.sudoku import (
 from competitive_sudoku.sudokuai import SudokuAI
 
 SUDOKU_SOLVER = (
-    "bin\\solve_sudoku.exe" if platform.system() == "Windows" else "bin/solve_sudoku"
+    "bin\\solve_sudoku.exe"
+    if platform.system() == "Windows"
+    else "bin/solve_sudoku_mac"
 )
 # SUDOKU_SOLVER = 'bin\\Windows\\solve_sudoku.exe' if platform.system() == 'Windows' else 'bin/solve_sudoku'
 
