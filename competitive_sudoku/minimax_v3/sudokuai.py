@@ -62,42 +62,45 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
 
         completed_regions = self.amount_of_regions_completed(new_state, move)
 
-        new_state.scores[new_state.current_player - 1] += score_dict[completed_regions]
+        new_state.scores[new_state.current_player -
+                         1] += score_dict[completed_regions]
 
         new_state.current_player = 3 - new_state.current_player
         return new_state
 
-    def get_valid_moves(self, game_state: GameState):
-        """
-        Gets the valid moves for the current Game State
-        """
-        N = game_state.board.N
+    # # Initial Code in A1
+    # def get_valid_moves(self, game_state: GameState):
+    #     """
+    #     Gets the valid moves for the current Game State
+    #     """
+    #     N = game_state.board.N
 
-        def is_valid_move(square, value):
-            return (
-                game_state.board.get(square) == SudokuBoard.empty
-                and not TabooMove(square, value) in game_state.taboo_moves
-                and (
-                    square in game_state.player_squares()
-                    if game_state.player_squares() is not None
-                    else True
-                )
-                and value
-                not in [game_state.board.get((square[0], col)) for col in range(N)]
-                and value
-                not in [game_state.board.get((row, square[1])) for row in range(N)]
-                and value not in self.get_region_values(game_state.board, square)
-            )
+    #     def is_valid_move(square, value):
+    #         return (
+    #             game_state.board.get(square) == SudokuBoard.empty
+    #             and not TabooMove(square, value) in game_state.taboo_moves
+    #             and (
+    #                 square in game_state.player_squares()
+    #                 if game_state.player_squares() is not None
+    #                 else True
+    #             )
+    #             and value
+    #             not in [game_state.board.get((square[0], col)) for col in range(N)]
+    #             and value
+    #             not in [game_state.board.get((row, square[1])) for row in range(N)]
+    #             and value not in self.get_region_values(game_state.board, square)
+    #         )
 
-        valid_moves = [
-            Move((i, j), value)
-            for i in range(N)
-            for j in range(N)
-            for value in range(1, N + 1)
-            if is_valid_move((i, j), value)
-        ]
-        return valid_moves
+    #     valid_moves = [
+    #         Move((i, j), value)
+    #         for i in range(N)
+    #         for j in range(N)
+    #         for value in range(1, N + 1)
+    #         if is_valid_move((i, j), value)
+    #     ]
+    #     return valid_moves
 
+    # Try 1 optimisation
 
     def get_valid_moves(self, game_state):
         N = game_state.board.N
@@ -106,8 +109,10 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
         region_height = board.region_height()
         region_width = board.region_width()
 
-        row_values = [set(board.get((i, col)) for col in range(N) if board.get((i, col)) != SudokuBoard.empty) for i in range(N)]
-        col_values = [set(board.get((row, j)) for row in range(N) if board.get((row, j)) != SudokuBoard.empty) for j in range(N)]
+        row_values = [set(board.get((i, col)) for col in range(
+            N) if board.get((i, col)) != SudokuBoard.empty) for i in range(N)]
+        col_values = [set(board.get((row, j)) for row in range(
+            N) if board.get((row, j)) != SudokuBoard.empty) for j in range(N)]
         region_values = {}
         for i in range(0, N, region_height):
             for j in range(0, N, region_width):
@@ -124,7 +129,7 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
             return (
                 board.get((i, j)) == SudokuBoard.empty
                 and TabooMove((i, j), value) not in game_state.taboo_moves
-                and (i, j) in player_squares 
+                and (i, j) in player_squares
                 and value not in row_values[i]
                 and value not in col_values[j]
                 and value not in region_values[region]
@@ -138,47 +143,47 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
         ]
         return valid_moves
 
+    # # Recommends taboo and we lost a turn
 
-    def get_valid_moves(self, game_state):
-        N = game_state.board.N
-        board = game_state.board
-        player_squares = game_state.player_squares()  # Already a subset of the board
+    # def get_valid_moves(self, game_state):
+    #     N = game_state.board.N
+    #     board = game_state.board
+    #     player_squares = game_state.player_squares()  # Already a subset of the board
 
-        row_values = {i: set() for i in range(N)}
-        col_values = {j: set() for j in range(N)}
-        region_values = {}
+    #     row_values = {i: set() for i in range(N)}
+    #     col_values = {j: set() for j in range(N)}
+    #     region_values = {}
 
-        region_height = board.region_height()
-        region_width = board.region_width()
+    #     region_height = board.region_height()
+    #     region_width = board.region_width()
 
-        for i in range(N):
-            for j in range(N):
-                value = board.get((i, j))
-                if value != SudokuBoard.empty:
-                    row_values[i].add(value)
-                    col_values[j].add(value)
-                    region = (i // region_height, j // region_width)
-                    if region not in region_values:
-                        region_values[region] = set()
-                    region_values[region].add(value)
+    #     for i in range(N):
+    #         for j in range(N):
+    #             value = board.get((i, j))
+    #             if value != SudokuBoard.empty:
+    #                 row_values[i].add(value)
+    #                 col_values[j].add(value)
+    #                 region = (i // region_height, j // region_width)
+    #                 if region not in region_values:
+    #                     region_values[region] = set()
+    #                 region_values[region].add(value)
 
-        valid_moves = []
-        for (i, j) in player_squares:
-            if board.get((i, j)) != SudokuBoard.empty:
-                continue
+    #     valid_moves = []
+    #     for (i, j) in player_squares:
+    #         if board.get((i, j)) != SudokuBoard.empty:
+    #             continue
 
-            region = (i // region_height, j // region_width)
-            for value in range(1, N + 1):
-                if (
-                    value not in row_values[i]
-                    and value not in col_values[j]
-                    and value not in region_values.get(region, set())
-                    and TabooMove((i, j), value) not in game_state.taboo_moves
-                ):
-                    valid_moves.append(Move((i, j), value))
+    #         region = (i // region_height, j // region_width)
+    #         for value in range(1, N + 1):
+    #             if (
+    #                 value not in row_values[i]
+    #                 and value not in col_values[j]
+    #                 and value not in region_values.get(region, set())
+    #                 and TabooMove((i, j), value) not in game_state.taboo_moves
+    #             ):
+    #                 valid_moves.append(Move((i, j), value))
 
-        return valid_moves
-
+    #     return valid_moves
 
     def get_region_values(self, board: SudokuBoard, square: Tuple[int, int]):
         """
@@ -280,7 +285,8 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
         """
         ai_player_index = game_state.current_player - 1
         depth = (game_state.board.board_height() * game_state.board.board_width()) - (
-            len(game_state.occupied_squares1) + len(game_state.occupied_squares2)
+            len(game_state.occupied_squares1) +
+            len(game_state.occupied_squares2)
         )  # Total number of unoccupied squares
 
         valid_moves = self.get_valid_moves(game_state)
