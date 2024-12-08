@@ -2,7 +2,6 @@ from competitive_sudoku.sudoku import SudokuBoard, GameState, Move, TabooMove
 import copy
 from typing import Tuple
 
-
 def get_region_values(board: SudokuBoard, square: Tuple[int, int]):
     """
     Gets the values in the region corresponding to the given square.
@@ -21,55 +20,56 @@ def get_region_values(board: SudokuBoard, square: Tuple[int, int]):
 
 
 def get_valid_moves(game_state):
-        N = game_state.board.N
-        board = game_state.board
-        player_squares = set(game_state.player_squares())
-        region_height = board.region_height()
-        region_width = board.region_width()
+    N = game_state.board.N
+    board = game_state.board
+    player_squares = set(game_state.player_squares())
+    region_height = board.region_height()
+    region_width = board.region_width()
 
-        row_values = [set(board.get((i, col)) for col in range(
-            N) if board.get((i, col)) != SudokuBoard.empty) for i in range(N)]
-        col_values = [set(board.get((row, j)) for row in range(
-            N) if board.get((row, j)) != SudokuBoard.empty) for j in range(N)]
-        region_values = {}
-        for i in range(0, N, region_height):
-            for j in range(0, N, region_width):
-                region = (i // region_height, j // region_width)
-                region_values[region] = set(
-                    board.get((r, c))
-                    for r in range(i, i + region_height)
-                    for c in range(j, j + region_width)
-                    if board.get((r, c)) != SudokuBoard.empty
-                )
-
-        def possible(i, j, value):
+    row_values = [set(board.get((i, col)) for col in range(
+        N) if board.get((i, col)) != SudokuBoard.empty) for i in range(N)]
+    col_values = [set(board.get((row, j)) for row in range(
+        N) if board.get((row, j)) != SudokuBoard.empty) for j in range(N)]
+    region_values = {}
+    for i in range(0, N, region_height):
+        for j in range(0, N, region_width):
             region = (i // region_height, j // region_width)
-            return (
-                board.get((i, j)) == SudokuBoard.empty
-                and TabooMove((i, j), value) not in game_state.taboo_moves
-                and (i, j) in player_squares
-                and value not in row_values[i]
-                and value not in col_values[j]
-                and value not in region_values[region]
+            region_values[region] = set(
+                board.get((r, c))
+                for r in range(i, i + region_height)
+                for c in range(j, j + region_width)
+                if board.get((r, c)) != SudokuBoard.empty
             )
 
-        valid_moves= []
-        prio_dict = {}
-        for (i, j) in player_squares:
-            for value in range(1, N+1):
-                if possible(i,j,value):
-                    if (i,j) not in prio_dict.keys():
-                        prio_dict[(i,j)] = [Move((i,j),value)]
-                    else:
-                        prio_dict[(i,j)].append(Move((i,j), value))
-                    valid_moves.append(Move((i,j), value))
-        # valid_moves = [
-        #     Move((i, j), value)
-        #     for (i, j) in player_squares
-        #     for value in range(1, N + 1)
-        #     if possible(i, j, value)
-        # ]
-        return valid_moves, prio_dict
+    def possible(i, j, value):
+        region = (i // region_height, j // region_width)
+
+        return (
+            board.get((i, j)) == SudokuBoard.empty
+            and TabooMove((i, j), value) not in game_state.taboo_moves
+            and (i, j) in player_squares
+            and value not in row_values[i]
+            and value not in col_values[j]
+            and value not in region_values[region]
+        )
+
+    valid_moves = {}
+    for (i, j) in player_squares:
+        for value in range(1, N+1):
+            if possible(i,j,value):
+                if (i,j) not in valid_moves.keys():
+                    valid_moves[(i,j)] = [value]
+                else:
+                    valid_moves[(i, j)].append(value)
+
+
+    # valid_moves = [
+    #     Move((i, j), value)
+    #     for (i, j) in player_squares
+    #     for value in range(1, N + 1)
+    #     if possible(i, j, value)
+    # ]
+    return valid_moves
 
 
 def amount_of_regions_completed(game_state: GameState, move: Move):
@@ -108,7 +108,6 @@ def simulate_move(game_state: GameState, move: Move):
     Simulates a move and returns a new game state.
     """
     score_dict = {0: 0, 1: 1, 2: 3, 3: 7}
-
     new_state = copy.deepcopy(game_state)
     new_state.board.put(move.square, move.value)
     new_state.moves.append(move)
@@ -120,3 +119,5 @@ def simulate_move(game_state: GameState, move: Move):
 
     new_state.current_player = 3 - new_state.current_player
     return new_state
+
+

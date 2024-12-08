@@ -22,12 +22,14 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
         board = game_state.board
         board_text = str(board)
         options = '--greedy'
-        taboo_moves = ' '.join(f'{move.square[0]} {move.square[1]} {move.value}' for move in game_state.taboo_moves)
+        taboo_moves = ' '.join(
+            f'{move.square[0]} {move.square[1]} {move.value}' for move in game_state.taboo_moves)
         if taboo_moves:
             options += f' --taboo="{taboo_moves}"'
         player_squares = game_state.player_squares()
         if player_squares is not None:
-            allowed = ' '.join(str(board.square2index(square)) for square in player_squares)
+            allowed = ' '.join(str(board.square2index(square))
+                               for square in player_squares)
             options += f' --allowed="{allowed}"'
         output = solve_sudoku(self.solve_sudoku_path, board_text, options)
         m = re.search(r"Generated move \((\d+),(\d+)\)", output)

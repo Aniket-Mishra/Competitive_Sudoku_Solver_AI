@@ -34,7 +34,14 @@ class Move(object):
 
     def __eq__(self, other):
         return (self.square, self.value) == (other.square, other.value)
+    
+    def __hash__(self):
+            # Use the square (row, column) and value as the hash
+            return hash((self.square, self.value))
 
+    def __eq__(self, other):
+        # Two moves are equal if their square and value are equal
+        return isinstance(other, Move) and self.square == other.square and self.value == other.value
 
 class TabooMove(Move):
     """A TabooMove is a Move that was flagged as illegal by the sudoku oracle. In other words, the execution of such a

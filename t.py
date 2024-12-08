@@ -1,8 +1,6 @@
-dic = {'hi': [1]}
 
-if 'hi' not in dic.keys():
-    dic['hi'] = [1]
-else:
-    dic['hi'].append(2)
+dic = {'t' : [1,2,3]}
 
-print(dic)
+for it in dic.keys():
+    print(dic['t'], it)
+
