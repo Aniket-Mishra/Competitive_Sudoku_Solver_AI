@@ -1,7 +1,8 @@
 from competitive_sudoku.sudoku import GameState, Move
 
+
 def score_difference(game_state, ai_player_index):
-    return (game_state.scores[ai_player_index] - game_state.scores[1 - ai_player_index])
+    return game_state.scores[ai_player_index] - game_state.scores[1 - ai_player_index]
 
 
 def score_center_moves(game_state: GameState, ai_player_index):
@@ -15,19 +16,26 @@ def score_center_moves(game_state: GameState, ai_player_index):
     center = (game_state.board.N - 1) / 2
 
     ai_squares = (
-        game_state.occupied_squares1 if ai_player_index == 0 else game_state.occupied_squares2
+        game_state.occupied_squares1
+        if ai_player_index == 0
+        else game_state.occupied_squares2
     )
 
     row_prox = 0
     col_prox = 0
-    for (row, col) in ai_squares:
+    for row, col in ai_squares:
         row_prox += abs(row - center)
         col_prox += abs(col - center)
 
-    return -(row_weight * col_weight + col_weight * col_prox)
+    if ai_player_index == 0:
+        return -(row_weight * col_weight + col_weight * col_prox)
+    else:
+        return row_weight * col_weight + col_weight * col_prox
 
 
-def score_not_reachable_by_opponent(game_state: GameState, ai_player_index: int) -> float:
+def score_not_reachable_by_opponent(
+    game_state: GameState, ai_player_index: int
+) -> float:
     original_player = game_state.current_player
 
     if ai_player_index == 0:
@@ -40,7 +48,7 @@ def score_not_reachable_by_opponent(game_state: GameState, ai_player_index: int)
         ai_allowed_squares = game_state.player_squares()
         game_state.current_player = 1
         opponent_allowed_squares = game_state.player_squares()
-    
+
     game_state.current_player = original_player
 
     score = 0
