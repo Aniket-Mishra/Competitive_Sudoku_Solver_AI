@@ -13,6 +13,7 @@ from A2_Heuristics.minimax import minimax
 from A2_Heuristics.taboo_helpers import naked_singles, hidden_singles
 import time
 
+
 class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
     """
     Sudoku AI that computes a move for a given sudoku configuration using Minimax.
@@ -27,21 +28,21 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
         """
         ai_player_index = game_state.current_player - 1
         depth = (game_state.board.board_height() * game_state.board.board_width()) - (
-            len(game_state.occupied_squares1) +
-            len(game_state.occupied_squares2)
+            len(game_state.occupied_squares1) + len(game_state.occupied_squares2)
         )  # Total number of unoccupied squares
 
         valid_moves = get_valid_moves(game_state)
 
         # Call Taboo Heuristics
         valid_moves = naked_singles(game_state, valid_moves)
-        #valid_moves = hidden_singles(game_state, valid_moves)
+        # valid_moves = hidden_singles(game_state, valid_moves)
 
+        valid_moves = [
+            Move((row, col), value)
+            for (row, col), values in valid_moves.items()
+            for value in values
+        ]
 
-        valid_moves = [Move((row, col), value) for (row, col),
-                       values in valid_moves.items() for value in values]
-
-        
         best_move = None
         best_score = float("-inf")
 
