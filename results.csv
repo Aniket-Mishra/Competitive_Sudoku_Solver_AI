@@ -1,0 +1,3 @@
+time,board,player1,player2,player1_score,player2_score,no_of_p1_occupied_squares,no_of_p2_occupied_squares,total_moves,winner
+0.5,,A2_Heuristics,greedy_player,0,0,0,0,0,greedy_player
+0.5,,A2_Heuristics,greedy_player,0,0,0,0,0,greedy_player

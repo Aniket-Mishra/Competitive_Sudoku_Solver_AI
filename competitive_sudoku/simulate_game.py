@@ -16,52 +16,34 @@ from pathlib import Path
 from typing import Optional, Tuple
 
 from competitive_sudoku.execute import solve_sudoku
-from competitive_sudoku.sudoku import (
-    GameState,
-    SudokuBoard,
-    Move,
-    TabooMove,
-    parse_game_state,
-    SudokuSettings,
-    print_game_state,
-    pretty_print_game_state,
-    allowed_squares,
-)
+from competitive_sudoku.sudoku import GameState, SudokuBoard, Move, TabooMove, parse_game_state, \
+    SudokuSettings, print_game_state, pretty_print_game_state, allowed_squares
 from competitive_sudoku.sudokuai import SudokuAI
-import pandas as pd
-import time
 
-# SUDOKU_SOLVER = "D:\TUe\solve_sudoku.exe"
-SUDOKU_SOLVER = (
-    "C:\\Users\\jelle\\Documents\\TUEindhoven\\Master CSE\\2AMU10\\GitHub\\2AMU10_Foundations_of_Artificial_Intelligence\\competitive_sudoku\\bin\\solve_sudoku.exe"
-    if platform.system() == "Windows"
-    else "bin/solve_sudoku_mac"
-)
-# SUDOKU_SOLVER = 'bin\\Windows\\solve_sudoku.exe' if platform.system(
-# ) == 'Windows' else 'bin/solve_sudoku'
+SUDOKU_SOLVER = r"C:\Users\jelle\Documents\TUEindhoven\solve_sudoku.exe" if platform.system(
+) == 'Windows' else 'bin/solve_sudoku'
+# SUDOKU_SOLVER = 'bin\\Windows\\solve_sudoku.exe' if platform.system() == 'Windows' else 'bin/solve_sudoku'
 
 GameResult = Tuple[float, float]
 
 
 def check_oracle() -> None:
-    board_text = """2 2
+    board_text = '''2 2
        1   2   3   4
        3   4   .   2
        2   1   .   3
        .   .   .   1
-    """
+    '''
     output = solve_sudoku(SUDOKU_SOLVER, board_text)
-    result = "has a solution" in output
+    result = 'has a solution' in output
     if result:
-        print("The sudoku_solve program works.")
+        print('The sudoku_solve program works.')
     else:
-        print("The sudoku_solve program gives unexpected results.")
+        print('The sudoku_solve program gives unexpected results.')
         print(output)
 
 
-def warmup_players(
-    player1: SudokuAI, player2: SudokuAI, calculation_time: float = 2.0
-) -> None:
+def warmup_players(player1: SudokuAI, player2: SudokuAI, calculation_time: float = 2.0) -> None:
     initial_board = SudokuBoard(3, 3)
     game_state = GameState(initial_board, copy.deepcopy(initial_board))
     move_number = 0
@@ -78,35 +60,32 @@ def warmup_players(
         player2.best_move = manager.list([0, 0, 0])
 
         while move_number < number_of_moves:
-            player, player_number = (
-                (player1, 1) if len(game_state.moves) % 2 == 0 else (player2, 2)
-            )
+            player, player_number = (player1, 1) if len(
+                game_state.moves) % 2 == 0 else (player2, 2)
             player.best_move[0] = 0
             player.best_move[1] = 0
             player.best_move[2] = 0
             try:
                 process = multiprocessing.Process(
-                    target=player.compute_best_move, args=(game_state,)
-                )
+                    target=player.compute_best_move, args=(game_state,))
                 process.start()
                 time.sleep(calculation_time)
                 lock.acquire()
                 process.terminate()
                 lock.release()
             except Exception as err:
-                print(f"Error: an exception occurred during warm-up:\n{err}")
+                print(f'Error: an exception occurred during warm-up:\n{err}')
             move_number = move_number + 1
 
 
-def simulate_game(
-    game_state: GameState,
-    player1: SudokuAI,
-    player2: SudokuAI,
-    calculation_time: float = 0.5,
-    verbose=True,
-    warmup=False,
-    playmode="rows",
-) -> GameResult:
+def simulate_game(game_state: GameState,
+                  player1: SudokuAI,
+                  player2: SudokuAI,
+                  calculation_time: float = 0.5,
+                  verbose=True,
+                  warmup=False,
+                  playmode='rows'
+                  ) -> GameResult:
     """
     Simulates a game between two instances of SudokuAI.
     @param game_state: A game state.
@@ -125,16 +104,16 @@ def simulate_game(
     move_number = 0
     number_of_moves = game_state.board.squares.count(SudokuBoard.empty)
 
-    log("Initial state")
+    log('Initial state')
     if SudokuSettings.print_ascii_states:
         log(print_game_state(game_state))
     else:
         log(pretty_print_game_state(game_state))
 
     if warmup:
-        print("-- started warm-up --")
+        print('-- started warm-up --')
         warmup_players(player1, player2, 2.0)
-        print("-- finished warm-up --")
+        print('-- finished warm-up --')
 
     with multiprocessing.Manager() as manager:
         # use a lock to protect assignments to best_move
@@ -153,21 +132,12 @@ def simulate_game(
             player_number = game_state.current_player
             player = player1 if player_number == 1 else player2
             log(
-                f"-----------------------------\nCalculate a move for player {player_number}"
-            )
-            player_squares = (
-                None if playmode == "classic" else game_state.player_squares()
-            )
+                f'-----------------------------\nCalculate a move for player {player_number}')
+            player_squares = None if playmode == 'classic' else game_state.player_squares()
             if player_squares == []:
-                log(f"Player {player_number} cannot move")
+                log(f'Player {player_number} cannot move')
                 finished_players.add(player_number)
                 game_state.current_player = 3 - game_state.current_player
-                # IF we wanna end the game as soon as we trap the opponent.
-                # Doesn't work if we trap the opponent late in the game and
-                # they still end up having
-                # more points than us after we complete the remaining grid.
-                # print(f"Player {3-player_number} wins the game.")
-                # return (0, 1) if player_number == 1 else (1, 0)
                 continue
             else:
                 player.best_move[0] = 0
@@ -175,116 +145,83 @@ def simulate_game(
                 player.best_move[2] = 0
                 try:
                     process = multiprocessing.Process(
-                        target=player.compute_best_move, args=(game_state,)
-                    )
+                        target=player.compute_best_move, args=(game_state,))
                     process.start()
                     time.sleep(calculation_time)
                     lock.acquire()
                     process.terminate()
                     lock.release()
                 except Exception as err:
-                    log(f"Error: an exception occurred:\n{err}")
+                    log(f'Error: an exception occurred:\n{err}')
                 i, j, value = player.best_move
                 square = (i, j)
                 best_move = Move(square, value)
-                log(f"Best move: {best_move}")
+                log(f'Best move: {best_move}')
                 player_score = 0
                 if (i, j, value) != (0, 0, 0):
                     if TabooMove(square, value) in game_state.taboo_moves:
                         print(
-                            f"Error: {best_move} is a taboo move. Player {3-player_number} wins the game."
-                        )
-                        return (
-                            (0, 1, game_state)
-                            if player_number == 1
-                            else (1, 0, game_state)
-                        )
+                            f'Error: {best_move} is a taboo move. Player {3-player_number} wins the game.')
+                        return (0, 1) if player_number == 1 else (1, 0)
                     board_text = str(game_state.board)
-                    options = (
-                        f'--move "{game_state.board.square2index(square)} {value}"'
-                    )
+                    options = f'--move "{game_state.board.square2index(square)} {value}"'
                     if player_squares is not None:
-                        allowed = " ".join(
-                            str(game_state.board.square2index(square))
-                            for square in player_squares
-                        )
-                        print(allowed)
-                        options += f' --allowed="{allowed}"'
+                       allowed = ' '.join(str(game_state.board.square2index(
+                           square)) for square in player_squares)
+                       options += f' --allowed="{allowed}"'
                     output = solve_sudoku(SUDOKU_SOLVER, board_text, options)
-                    if "Invalid move" in output:
+                    if 'Invalid move' in output:
                         print(
-                            f"Error: {best_move} is not a valid move. Player {3-player_number} wins the game."
-                        )
-                        return (
-                            (0, 1, game_state)
-                            if player_number == 1
-                            else (1, 0, game_state)
-                        )
-                    if "Illegal move" in output:
+                            f'Error: {best_move} is not a valid move. Player {3-player_number} wins the game.')
+                        return (0, 1) if player_number == 1 else (1, 0)
+                    if 'Illegal move' in output:
                         print(
-                            f"Error: {best_move} is not a legal move. Player {3-player_number} wins the game."
-                        )
-                        return (
-                            (0, 1, game_state)
-                            if player_number == 1
-                            else (1, 0, game_state)
-                        )
-                    if "has no solution" in output:
-                        log(f"The sudoku has no solution after the move {best_move}.")
+                            f'Error: {best_move} is not a legal move. Player {3-player_number} wins the game.')
+                        return (0, 1) if player_number == 1 else (1, 0)
+                    if 'has no solution' in output:
+                        log(
+                            f'The sudoku has no solution after the move {best_move}.')
                         player_score = 0
                         game_state.moves.append(TabooMove(square, value))
                         game_state.taboo_moves.append(TabooMove(square, value))
-                    if "The score is" in output:
-                        match = re.search(r"The score is ([-\d]+)", output)
+                    if 'The score is' in output:
+                        match = re.search(r'The score is ([-\d]+)', output)
                         if match:
                             player_score = int(match.group(1))
                             game_state.board.put(square, value)
                             game_state.moves.append(best_move)
-                            if playmode != "classic":
+                            if playmode != 'classic':
                                 game_state.occupied_squares().append(square)
                             move_number = move_number + 1
                         else:
                             raise RuntimeError(
-                                f'Unexpected output of sudoku solver: "{output}".'
-                            )
+                                f'Unexpected output of sudoku solver: "{output}".')
                 else:
                     print(
-                        f"No move was supplied. Player {3-player_number} wins the game."
-                    )
-                    return (
-                        (0, 1, game_state) if player_number == 1 else (1, 0, game_state)
-                    )
-            game_state.scores[player_number - 1] = (
-                game_state.scores[player_number - 1] + player_score
-            )
+                        f'No move was supplied. Player {3-player_number} wins the game.')
+                    return (0, 1) if player_number == 1 else (1, 0)
+            game_state.scores[player_number -
+                              1] = game_state.scores[player_number-1] + player_score
             game_state.current_player = 3 - game_state.current_player
-            log(f"Reward: {player_score}")
+            log(f'Reward: {player_score}')
             if SudokuSettings.print_ascii_states:
                 log(print_game_state(game_state))
             else:
                 log(pretty_print_game_state(game_state))
         if not verbose:
-            print(f"Score: {game_state.scores[0]} - {game_state.scores[1]}")
+            print(f'Score: {game_state.scores[0]} - {game_state.scores[1]}')
         if game_state.scores[0] > game_state.scores[1]:
-            print("Player 1 wins the game.")
-            return 1, 0, game_state
+            print('Player 1 wins the game.')
+            return 1, 0
         elif game_state.scores[0] == game_state.scores[1]:
-            print("The game ends in a draw.")
-            return 0.5, 0.5, game_state
+            print('The game ends in a draw.')
+            return 0.5, 0.5
         elif game_state.scores[0] < game_state.scores[1]:
-            print("Player 2 wins the game.")
-            return 0, 1, game_state
+            print('Player 2 wins the game.')
+            return 0, 1
 
 
-def play_game(
-    board_file: Optional[str],
-    name1: str,
-    name2: str,
-    calculation_time: float,
-    verbose=True,
-    warmup=False,
-    playmode="rows",
-) -> GameResult:
+def play_game(board_file: Optional[str], name1: str, name2: str, calculation_time: float, verbose=True, warmup=False, playmode='rows') -> GameResult:
     """
     Simulates a game between two instances of SudokuAI.
     @param board_file: A text file containing a game state.
@@ -299,90 +236,58 @@ def play_game(
     if board_file:
         text = Path(board_file).read_text()
         game_state = parse_game_state(text, playmode)
-    elif playmode == "classic":
+    elif playmode == 'classic':
         game_state = GameState()
     else:
         initial_board = SudokuBoard(2, 2)
-        allowed_squares1, allowed_squares2 = allowed_squares(initial_board, playmode)
-        game_state = GameState(
-            allowed_squares1=allowed_squares1,
-            occupied_squares1=[],
-            allowed_squares2=allowed_squares2,
-            occupied_squares2=[],
-        )
+        allowed_squares1, allowed_squares2 = allowed_squares(
+            initial_board, playmode)
+        game_state = GameState(allowed_squares1=allowed_squares1, occupied_squares1=[
+        ], allowed_squares2=allowed_squares2, occupied_squares2=[])
 
-    module1 = importlib.import_module(name1 + ".sudokuai")
-    module2 = importlib.import_module(name2 + ".sudokuai")
+    module1 = importlib.import_module(name1 + '.sudokuai')
+    module2 = importlib.import_module(name2 + '.sudokuai')
     player1 = module1.SudokuAI()
     player2 = module2.SudokuAI()
     player1.player_number = 1
     player2.player_number = 2
-    if name1 in ("random_player", "greedy_player", "random_save_player"):
+    if name1 in ('random_player', 'greedy_player', 'random_save_player'):
         player1.solve_sudoku_path = SUDOKU_SOLVER
-    if name2 in ("random_player", "greedy_player", "random_save_player"):
+    if name2 in ('random_player', 'greedy_player', 'random_save_player'):
         player2.solve_sudoku_path = SUDOKU_SOLVER
 
     # clean up pickle files
-    if os.path.isfile(os.path.join(os.getcwd(), "-1.pkl")):
-        os.remove(os.path.join(os.getcwd(), "-1.pkl"))
-    if os.path.isfile(os.path.join(os.getcwd(), "1.pkl")):
-        os.remove(os.path.join(os.getcwd(), "1.pkl"))
-    if os.path.isfile(os.path.join(os.getcwd(), "2.pkl")):
-        os.remove(os.path.join(os.getcwd(), "2.pkl"))
+    if os.path.isfile(os.path.join(os.getcwd(), '-1.pkl')):
+        os.remove(os.path.join(os.getcwd(), '-1.pkl'))
+    if os.path.isfile(os.path.join(os.getcwd(), '1.pkl')):
+        os.remove(os.path.join(os.getcwd(), '1.pkl'))
+    if os.path.isfile(os.path.join(os.getcwd(), '2.pkl')):
+        os.remove(os.path.join(os.getcwd(), '2.pkl'))
 
-    return simulate_game(
-        game_state,
-        player1,
-        player2,
-        calculation_time=calculation_time,
-        verbose=verbose,
-        warmup=warmup,
-        playmode=playmode,
-    )
+    return simulate_game(game_state, player1, player2, calculation_time=calculation_time, verbose=verbose, warmup=warmup, playmode=playmode)
 
 
 def main():
     cmdline_parser = argparse.ArgumentParser(
-        description="Script for simulating a competitive sudoku game."
-    )
+        description='Script for simulating a competitive sudoku game.')
     cmdline_parser.add_argument(
-        "--first",
-        help="the module name of the first player's SudokuAI class (default: random_player)",
-        default="A2_Heuristics",
-    )
+        '--first', help="the module name of the first player's SudokuAI class (default: random_player)", default='A2_Heuristics')
     cmdline_parser.add_argument(
-        "--second",
-        help="the module name of the second player's SudokuAI class (default: random_player)",
-        default="greedy_player",
-    )
+        '--second', help="the module name of the second player's SudokuAI class (default: random_player)", default='greedy_player')
     cmdline_parser.add_argument(
-        "--time",
-        help="the time (in seconds) for computing a move (default: 0.5)",
-        type=float,
-        default=0.5,
-    )
+        '--time', help="the time (in seconds) for computing a move (default: 0.5)", type=float, default=0.5)
     cmdline_parser.add_argument(
-        "--check", help="check if the solve_sudoku program works", action="store_true"
-    )
+        '--check', help="check if the solve_sudoku program works", action='store_true')
     cmdline_parser.add_argument(
-        "--board", metavar="FILE", type=str, help="a text file containing a game state"
-    )
+        '--board', metavar='FILE', type=str, help='a text file containing a game state')
     cmdline_parser.add_argument(
-        "--quiet", help="print minimal output", action="store_true"
-    )
+        '--quiet', help='print minimal output', action='store_true')
     cmdline_parser.add_argument(
-        "--warm-up",
-        help="let the engines play a move before the start of the game",
-        action="store_true",
-    )
+        '--warm-up', help='let the engines play a move before the start of the game', action='store_true')
+    cmdline_parser.add_argument('--playmode', type=str, choices=['classic', 'rows', 'border', 'random'],
+                                default='rows', help='Choose the playing mode (classic, rows, border, random). Defaults to rows.')
     cmdline_parser.add_argument(
-        "--playmode",
-        type=str,
-        choices=["classic", "rows", "border", "random"],
-        default="rows",
-        help="Choose the playing mode (classic, rows, border, random). Defaults to rows.",
-    )
-    cmdline_parser.add_argument("--ascii", help=argparse.SUPPRESS, action="store_true")
+        '--ascii', help=argparse.SUPPRESS, action='store_true')
     args = cmdline_parser.parse_args()
 
     SudokuSettings.print_ascii_states = args.ascii
@@ -390,163 +295,9 @@ def main():
     if args.check:
         check_oracle()
     else:
-        game_output = play_game(
-            args.board,
-            args.first,
-            args.second,
-            args.time,
-            verbose=not args.quiet,
-            warmup=args.warm_up,
-            playmode=args.playmode,
-        )
-
-    if game_output:
-        p1, p2, game_state = game_output
-
-        # Define the CSV file name
-        file_name = "results.csv"
-        columns = [
-            "time",
-            "board",
-            "player1",
-            "player2",
-            "player1_score",
-            "player2_score",
-            "no_of_p1_occupied_squares",
-            "no_of_p2_occupied_squares",
-            "total_moves",
-            "winner",
-        ]
-
-        # Ensure results.csv exists
-        if not os.path.exists(file_name):
-            df = pd.DataFrame(columns=columns)
-            df.to_csv(file_name, index=False)
-
-        # Calculate results
-        p1_score = game_state.scores[0]
-        p2_score = game_state.scores[1]
-        p1_occupied = len(game_state.occupied_squares1)
-        p2_occupied = len(game_state.occupied_squares2)
-        total_moves = len(game_state.moves)
-        winner = args.first if p1 > p2 else args.second if p2 > p1 else "Draw"
-
-        # Append results to CSV
-        new_row = {
-            "time": args.time,
-            "board": args.board,
-            "player1": args.first,
-            "player2": args.second,
-            "player1_score": p1_score,
-            "player2_score": p2_score,
-            "no_of_p1_occupied_squares": p1_occupied,
-            "no_of_p2_occupied_squares": p2_occupied,
-            "total_moves": total_moves,
-            "winner": winner,
-        }
-        df = pd.read_csv(file_name)
-        df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
-        df.to_csv(file_name, index=False)
-
-        return game_output
+        play_game(args.board, args.first, args.second, args.time,
+                  verbose=not args.quiet, warmup=args.warm_up, playmode=args.playmode)
 
 
-# if __name__ == "__main__":
-#     p1, p2, game_state = main()
-#     print(p1)
-#     print(p2)
-#     print(game_state)
-#     import pandas as pd
-#     import os
-
-#     # Define the file name
-#     file_name = "results.csv"
-#     columns = [
-#         "time",
-#         "board",
-#         "player1",
-#         "player2",
-#         "player1_score",
-#         "player2_score",
-#         "no_of_p1_occupied_squares",
-#         "no_of_p2_occupied_squares",
-#         "total_moves",
-#         "winner",
-#     ]
-
-#     # Check if the file already exists
-#     if not os.path.exists(file_name):
-#         # Create an empty DataFrame with the specified columns
-#         df = pd.DataFrame(columns=columns)
-#         # Save the DataFrame to a CSV file
-#         df.to_csv(file_name, index=False)
-#         print(f"CSV file '{file_name}' created successfully.")
-#     df = pd.read_csv("results.csv")
-#     p1_score = game_state.scores[0]
-#     p2_score = game_state.scores[1]
-#     p1_occu_len = len(game_state.occupied_squares1)
-#     p2_occu_len = len(game_state.occupied_squares2)
-#     num_moves = len(game_state.moves)
-
-
-if __name__ == "__main__":
-    import pandas as pd
-    import os
-
-    # Run the main simulation
-    p1, p2, game_state = main()
-    # print("Player 1 score:", p1)
-    # print("Player 2 score:", p2)
-    # print("Final game state:")
-    # print(game_state)
-
-    # # Define the CSV file name
-    # file_name = "results.csv"
-
-    # # Define the columns for the CSV
-    # columns = [
-    #     "time",
-    #     "board",
-    #     "player1",
-    #     "player2",
-    #     "player1_score",
-    #     "player2_score",
-    #     "no_of_p1_occupied_squares",
-    #     "no_of_p2_occupied_squares",
-    #     "total_moves",
-    #     "winner",
-    # ]
-
-    # # Check if the results file exists, create it if it doesn't
-    # if not os.path.exists(file_name):
-    #     df = pd.DataFrame(columns=columns)
-    #     df.to_csv(file_name, index=False)
-    #     print(f"CSV file '{file_name}' created successfully.")
-
-    # # Calculate game results
-    # p1_score = game_state.scores[0]
-    # p2_score = game_state.scores[1]
-    # p1_occupied = len(game_state.occupied_squares1)
-    # p2_occupied = len(game_state.occupied_squares2)
-    # total_moves = len(game_state.moves)
-    # winner = "P1" if p1 > p2 else "P2" if p2 > p1 else "Draw"
-
-    # # Append the new result to the CSV
-    # new_row = {
-    #     "time": game_state.settings.calculation_time,
-    #     "board": game_state.settings.board_file,
-    #     "player1": game_state.settings.first_player,
-    #     "player2": game_state.settings.second_player,
-    #     "player1_score": p1_score,
-    #     "player2_score": p2_score,
-    #     "no_of_p1_occupied_squares": p1_occupied,
-    #     "no_of_p2_occupied_squares": p2_occupied,
-    #     "total_moves": total_moves,
-    #     "winner": winner,
-    # }
-
-    # # Load the existing results and append the new row
-    # df = pd.read_csv(file_name)
-    # df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
-    # df.to_csv(file_name, index=False)
-    # print(f"Results appended to '{file_name}'.")
+if __name__ == '__main__':
+    main()

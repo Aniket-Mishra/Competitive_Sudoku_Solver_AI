@@ -43,6 +43,8 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
             for value in values
         ]
 
+        self.propose_move(random.choice(valid_moves))
+
         best_move = None
         best_score = float("-inf")
 
@@ -58,8 +60,8 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                     maximizing=False,
                     ai_player_index=ai_player_index,
                 )
-                # print(
-                #     f'move {move} gives score {score} for depth {depth}')
+                print(
+                    f'move {move} gives score {score} for depth {depth}')
                 depth_move_scores.append((move, score))
 
                 if score >= best_score:
@@ -72,3 +74,65 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                 i[0]
                 for i in sorted(depth_move_scores, key=lambda x: x[1], reverse=True)
             ]
+
+    # def compute_best_move(self, game_state: GameState) -> None:
+    #     """
+    #     Minimax with iterative deepening depth  # ToDo - Caching if needed
+    #     """
+    #     ai_player_index = game_state.current_player - 1
+    #     depth = (game_state.board.board_height() * game_state.board.board_width()) - (
+    #         len(game_state.occupied_squares1) + len(game_state.occupied_squares2)
+    #     )  # Total number of unoccupied squares
+
+    #     valid_moves = get_valid_moves(game_state)
+
+    #     # Call Taboo Heuristics
+    #     valid_moves = naked_singles(game_state, valid_moves)
+    #     # valid_moves = hidden_singles(game_state, valid_moves)
+
+    #     valid_moves = [
+    #         Move((row, col), value)
+    #         for (row, col), values in valid_moves.items()
+    #         for value in values
+    #     ]
+
+    #     self.propose_move(random.choice(valid_moves))
+
+    #     best_move = None
+    #     best_depth_move = None
+
+    #     best_score = float("-inf")
+    #     best_depth_score = float("-inf")
+
+    #     for depth in range(1, depth + 1):
+    #         depth_move_scores = []
+    #         for move in valid_moves:
+    #             next_state = simulate_move(game_state, move, ai_player_index)
+    #             score = minimax(
+    #                 next_state,
+    #                 depth,
+    #                 float("-inf"),
+    #                 float("inf"),
+    #                 maximizing=False,
+    #                 ai_player_index=ai_player_index,
+    #             )
+    #             print(
+    #                 f'move {move} gives score {score} for depth {depth}')
+    #             depth_move_scores.append((move, score))
+
+    #             if score >= best_depth_score:
+    #                 best_depth_score = score
+    #                 best_depth_move = move
+
+    #         best_score = best_depth_score
+    #         best_move = best_depth_move
+
+    #         if best_depth_score > best_score:
+    #             self.propose_move(best_depth_move)
+    #         else:
+    #             self.propose_move(best_move)
+
+    #         valid_moves = [
+    #             i[0]
+    #             for i in sorted(depth_move_scores, key=lambda x: x[1], reverse=True)
+    #         ]

@@ -60,9 +60,9 @@ def evaluate(game_state: GameState,
     and the priority of the move being considered.
     """
     w1 = 0.5
-    w2 = 1
-    w3 = 0.5
+    w2 = 0.5
+    w3 = 1
     center_scores = score_center_moves(game_state, ai_player_index)
     point_scores = score_difference(game_state, ai_player_index)
     opponent_reachable_scores = -score_not_reachable_by_opponent(game_state, ai_player_index)
-    return w1* center_scores + w2 * point_scores + w3 * opponent_reachable_scores
+    return w1 * center_scores + w2 * point_scores + w3 * opponent_reachable_scores

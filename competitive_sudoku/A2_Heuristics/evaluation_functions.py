@@ -1,4 +1,4 @@
-from competitive_sudoku.sudoku import GameState, Move
+from competitive_sudoku.sudoku import GameState
 
 
 def score_difference(game_state, ai_player_index):
@@ -33,9 +33,7 @@ def score_center_moves(game_state: GameState, ai_player_index):
         return row_weight * col_weight + col_weight * col_prox
 
 
-def score_not_reachable_by_opponent(
-    game_state: GameState, ai_player_index: int
-) -> float:
+def score_not_reachable_by_opponent(game_state: GameState, ai_player_index: int) -> float:
     original_player = game_state.current_player
 
     if ai_player_index == 0:
@@ -52,10 +50,17 @@ def score_not_reachable_by_opponent(
     game_state.current_player = original_player
 
     score = 0
+    max_score = 0
     for square in ai_allowed_squares:
+        max_score += 1
         if square in opponent_allowed_squares:
-            score += 5
+            score += 1
         else:
-            score -= 10
+            score -= 5
 
-    return score
+    if max_score > 0:
+        normalized_score = score / max_score
+    else:
+        normalized_score = 0
+
+    return normalized_score
