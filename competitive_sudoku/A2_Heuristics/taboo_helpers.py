@@ -4,11 +4,11 @@ from competitive_sudoku.sudoku import SudokuBoard, TabooMove, GameState, Move
 def naked_singles(game_state: GameState, valid_moves):
     N = game_state.board.N
 
-    for hidden_single in valid_moves:
-        if len(valid_moves[hidden_single]) == 1:
-            single_row = hidden_single[0]
-            single_column = hidden_single[1]
-            single_value = valid_moves[hidden_single][0]
+    for naked_single in valid_moves:
+        if len(valid_moves[naked_single]) == 1:
+            single_row = naked_single[0]
+            single_column = naked_single[1]
+            single_value = valid_moves[naked_single][0]
 
             for i in range(N):
                 if i != single_row and (i, single_column) in valid_moves and single_value in valid_moves[(i, single_column)]:
@@ -24,9 +24,34 @@ def naked_singles(game_state: GameState, valid_moves):
     return valid_moves
 
 
-def hidden_singles(game_state: GameState, valid_moves):
+def hidden_singles(
+    game_state: GameState,
+    valid_moves):
     """
-    Find values which has to be placed in a certain cell, we check this as follows:
-    check possible values in the same row, same column and in the same box. 
-    If one of these groups constraint the cell such that it can only take 1 value, it is a hidden single
+    Validates existing `valid_moves` by dynamically checking for hidden singles
+    within rows, columns, and blocks. Removes any moves that conflict with
+    hidden singles.
+
+    @param game_state: The current GameState.
+    @param valid_moves: A dictionary of already computed valid moves for the player's reach.
+    @return: The filtered valid_moves dictionary.
     """
+    N = game_state.board.N
+    board = game_state.board
+    region_width = board.region_width()
+    region_height = board.region_height()
+
+    for move in valid_moves:
+        hidden_row = move[0]
+        hidden_col = move[1]
+        hidden_val = valid_moves[move]
+        
+
+        # Check col
+        col_values = []
+        for row in range(N):
+            col_values.append(game_state.board.get((row, hidden_col)))
+            print(game_state.board.get((row, hidden_col)))
+        print('-----')
+
+    return valid_moves

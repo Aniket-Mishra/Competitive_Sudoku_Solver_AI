@@ -47,28 +47,19 @@ def get_valid_moves(game_state):
         return (
             board.get((i, j)) == SudokuBoard.empty
             and TabooMove((i, j), value) not in game_state.taboo_moves
-            and (i, j) in player_squares
             and value not in row_values[i]
             and value not in col_values[j]
             and value not in region_values[region]
         )
 
     valid_moves = {}
-    for (i, j) in player_squares:
+    for (i,j) in player_squares:
         for value in range(1, N+1):
             if possible(i,j,value):
                 if (i,j) not in valid_moves.keys():
                     valid_moves[(i,j)] = [value]
                 else:
                     valid_moves[(i, j)].append(value)
-
-
-    # valid_moves = [
-    #     Move((i, j), value)
-    #     for (i, j) in player_squares
-    #     for value in range(1, N + 1)
-    #     if possible(i, j, value)
-    # ]
     return valid_moves
 
 
@@ -103,21 +94,26 @@ def amount_of_regions_completed(game_state: GameState, move: Move):
     return completed
 
 
-def simulate_move(game_state: GameState, move: Move):
+def simulate_move(game_state: GameState, move: Move, ai_player_index):
     """
-    Simulates a move and returns a new game state.
+    Simulates a move and updates allowed squares and occupied squares correctly.
     """
     score_dict = {0: 0, 1: 1, 2: 3, 3: 7}
     new_state = copy.deepcopy(game_state)
     new_state.board.put(move.square, move.value)
     new_state.moves.append(move)
 
-    completed_regions = amount_of_regions_completed(new_state, move)
+    if new_state.current_player == 1:
+        new_state.occupied_squares1.append(move.square)
+    else:
+        new_state.occupied_squares2.append(move.square)
 
+
+    completed_regions = amount_of_regions_completed(new_state, move)
     new_state.scores[new_state.current_player -
                      1] += score_dict[completed_regions]
 
+    # Switch the current player
     new_state.current_player = 3 - new_state.current_player
+
     return new_state
-
-

@@ -10,7 +10,8 @@ import competitive_sudoku.sudokuai
 from typing import Tuple
 from A2_Heuristics.helper_functions import simulate_move, get_valid_moves
 from A2_Heuristics.minimax import minimax
-from A2_Heuristics.taboo_helpers import naked_singles
+from A2_Heuristics.taboo_helpers import naked_singles, hidden_singles
+import time
 
 class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
     """
@@ -30,24 +31,24 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
             len(game_state.occupied_squares2)
         )  # Total number of unoccupied squares
 
-
-        valid_moves_dict = get_valid_moves(game_state)
+        valid_moves = get_valid_moves(game_state)
 
         # Call Taboo Heuristics
-        valid_moves = naked_singles(game_state, valid_moves_dict)
+        valid_moves = naked_singles(game_state, valid_moves)
+        #valid_moves = hidden_singles(game_state, valid_moves)
 
 
         valid_moves = [Move((row, col), value) for (row, col),
-                    values in valid_moves_dict.items() for value in values]
+                       values in valid_moves.items() for value in values]
 
+        
         best_move = None
         best_score = float("-inf")
 
         for depth in range(1, depth + 1):
             depth_move_scores = []
-
             for move in valid_moves:
-                next_state = simulate_move(game_state, move)
+                next_state = simulate_move(game_state, move, ai_player_index)
                 score = minimax(
                     next_state,
                     depth,
@@ -56,6 +57,8 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                     maximizing=False,
                     ai_player_index=ai_player_index,
                 )
+                # print(
+                #     f'move {move} gives score {score} for depth {depth}')
                 depth_move_scores.append((move, score))
 
                 if score >= best_score:
@@ -68,5 +71,3 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                 i[0]
                 for i in sorted(depth_move_scores, key=lambda x: x[1], reverse=True)
             ]
-
-
