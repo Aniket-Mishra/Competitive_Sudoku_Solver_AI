@@ -39,7 +39,7 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
         valid_moves = get_valid_moves(game_state)
 
         valid_moves = naked_singles(game_state, valid_moves)  # Taboo stuff
-        # valid_moves = hidden_singles(game_state, valid_moves)
+        # valid_moves = hidden_singles(game_state, valid_moves) # we'll get it to work some day
 
         valid_moves = [
             Move((row, col), value)
