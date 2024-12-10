@@ -51,10 +51,10 @@ def score_center_moves(game_state: GameState, ai_player_index) -> float:
     # Commented out cuz we started losing somehow after this :'(
     # For A3 I guess.
 
-    # num_squares = len(ai_squares)
-    # if num_squares > 0:
-    #     row_prox /= num_squares
-    #     col_prox /= num_squares
+    num_squares = len(ai_squares)
+    if num_squares > 0:
+        row_prox /= num_squares
+        col_prox /= num_squares
 
     # Neg for top - occupy center and try to trap
     # Pos for bottom - Occupy and trap from the sides
