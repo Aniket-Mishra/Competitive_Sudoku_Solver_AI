@@ -11,12 +11,15 @@ from typing import Tuple
 from team03_A2.helper_functions import simulate_move, get_valid_moves
 from team03_A2.minimax import minimax
 from team03_A2.taboo_helpers import naked_singles, hidden_singles
-import time
+import time  # Tried to time or agent, will use again later.
 
 
 class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
     """
-    Sudoku AI that computes a move for a given sudoku configuration using Minimax.
+    Sudoku AI Class that computes a move for a given sudoku configuration using Minimax.
+
+    Args:
+        SudokuAI (sudoku ai object): parent class - inherited here
     """
 
     def __init__(self):
@@ -25,16 +28,17 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
     def compute_best_move(self, game_state: GameState) -> None:
         """
         Minimax with iterative deepening depth  # ToDo - Caching if needed
+        Args:
+            game_state (GameState): current game state
         """
         ai_player_index = game_state.current_player - 1
         depth = (game_state.board.board_height() * game_state.board.board_width()) - (
             len(game_state.occupied_squares1) + len(game_state.occupied_squares2)
-        )  # Total number of unoccupied squares
+        )  # Number of unoccupied squares
 
         valid_moves = get_valid_moves(game_state)
 
-        # Call Taboo Heuristics
-        valid_moves = naked_singles(game_state, valid_moves)
+        valid_moves = naked_singles(game_state, valid_moves)  # Taboo stuff
         # valid_moves = hidden_singles(game_state, valid_moves)
 
         valid_moves = [
@@ -58,7 +62,7 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                     maximizing=False,
                     ai_player_index=ai_player_index,
                 )
-                print(f"move {move} gives score {score} for depth {depth}")
+                # print(f"move {move} gives score {score} for depth {depth}")
                 depth_move_scores.append((move, score))
 
                 if score >= best_score:
@@ -67,6 +71,8 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                 if best_move:
                     self.propose_move(best_move)
 
+            # Sort so that we have the best option at the beginning
+            # Makes our boo better
             valid_moves = [
                 i[0]
                 for i in sorted(depth_move_scores, key=lambda x: x[1], reverse=True)

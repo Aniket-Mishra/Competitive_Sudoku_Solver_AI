@@ -15,9 +15,20 @@ def minimax(
     beta: int,
     maximizing: bool,
     ai_player_index: int,
-):
+) -> float:
     """
     Minimax implementation with depth-limited search.
+
+    Args:
+        game_state (GameState): Current Game state
+        depth (int): Da deep depth of the minimax recursion
+        alpha (int): maximiser
+        beta (int): minimiser
+        maximizing (bool): Maximinsing player or not
+        ai_player_index (int): Index denoting our boo
+
+    Returns:
+        float: evaluation of the minimax
     """
     valid_moves_dict = get_valid_moves(game_state)
     # valid_moves = naked_singles(game_state, valid_moves_dict)
@@ -68,9 +79,15 @@ def minimax(
         return min_eval
 
 
-def is_terminal(game_state: GameState):
+def is_terminal(game_state: GameState) -> bool:
     """
     Checks if the game state is terminal (no valid moves left).
+
+    Args:
+        game_state (GameState): Current Game state
+
+    Returns:
+        bool: Is last terminal state or not
     """
     valid_moves_dict = get_valid_moves(game_state)
     valid_moves = [move for moves in valid_moves_dict.values() for move in moves]
@@ -80,10 +97,19 @@ def is_terminal(game_state: GameState):
 def evaluate(
     game_state: GameState,
     ai_player_index: int,
-):
+) -> float:
     """
     Evaluates the game state with a heuristic based on the score, potential moves,
     and the priority of the move being considered.
+
+    Args:
+        game_state (GameState): Current game state
+        ai_player_index (int): our agent index
+
+    Returns:
+        float: Weighted score,
+            the weights work,
+            do not ask why cuz we do not know
     """
     w1 = 0.5
     w2 = 0.5
@@ -93,7 +119,7 @@ def evaluate(
     opponent_reachable_scores = -score_not_reachable_by_opponent(
         game_state, ai_player_index
     )
-    # print(center_scores)
-    # print(point_scores)
-    # print(opponent_reachable_scores)
+    # print(f"{center_scores=}")
+    # print(f"{point_scores=}")
+    # print(f"{opponent_reachable_scores=}")
     return w1 * center_scores + w2 * point_scores + w3 * opponent_reachable_scores

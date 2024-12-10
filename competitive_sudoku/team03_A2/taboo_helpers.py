@@ -1,7 +1,18 @@
 from competitive_sudoku.sudoku import SudokuBoard, TabooMove, GameState, Move
+from typing import Dict, List, Tuple
 
 
-def naked_singles(game_state: GameState, valid_moves):
+def naked_singles(game_state: GameState, valid_moves: Dict) -> Dict:
+    """
+    Calculate naked singles
+
+    Args:
+        game_state (GameState): Current game state
+        valid_moves (Dict): Dict of calid moves
+
+    Returns:
+        Dict: Dict of valid moves post naked singles
+    """
     N = game_state.board.N
 
     for naked_single in valid_moves:
@@ -34,15 +45,18 @@ def naked_singles(game_state: GameState, valid_moves):
     return valid_moves
 
 
-def hidden_singles(game_state: GameState, valid_moves):
+def hidden_singles(game_state: GameState, valid_moves: Dict) -> Dict:
     """
-    Validates existing `valid_moves` by dynamically checking for hidden singles
-    within rows, columns, and blocks. Removes any moves that conflict with
-    hidden singles.
+        Validates existing `valid_moves` by dynamically checking for hidden singles
+        within rows, columns, and blocks. Removes any moves that conflict with
+        hidden singles.
 
-    @param game_state: The current GameState.
-    @param valid_moves: A dictionary of already computed valid moves for the player's reach.
-    @return: The filtered valid_moves dictionary.
+    Args:
+        game_state (GameState): Current gamestate
+        valid_moves (Dict): A dictionary of already computed valid moves for the player's reach.
+
+    Returns:
+        Dict: Valid moves dict
     """
     N = game_state.board.N
     board = game_state.board
@@ -54,7 +68,6 @@ def hidden_singles(game_state: GameState, valid_moves):
         hidden_col = move[1]
         hidden_val = valid_moves[move]
 
-        # Check col
         col_values = []
         for row in range(N):
             col_values.append(game_state.board.get((row, hidden_col)))
