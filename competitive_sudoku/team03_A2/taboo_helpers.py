@@ -5,6 +5,10 @@ from typing import Dict, List, Tuple
 def naked_singles(game_state: GameState, valid_moves: Dict) -> Dict:
     """
     Calculate naked singles
+    If a single square is left in a region/row/col
+    We know what value it iwll take
+    So we remove said value from remaining dependent regions
+    And add it to taboo moves.
 
     Args:
         game_state (GameState): Current game state
@@ -48,8 +52,9 @@ def naked_singles(game_state: GameState, valid_moves: Dict) -> Dict:
 def hidden_singles(game_state: GameState, valid_moves: Dict) -> Dict:
     """
         Validates existing `valid_moves` by dynamically checking for hidden singles
-        within rows, columns, and blocks. Removes any moves that conflict with
-        hidden singles.
+        In rows, columns, and regions.
+        Remove any moves that conflict with
+        Hidden singles.
 
     Args:
         game_state (GameState): Current gamestate

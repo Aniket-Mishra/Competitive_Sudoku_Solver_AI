@@ -113,7 +113,7 @@ def evaluate(
     """
     w1 = 0.5
     w2 = 0.5
-    w3 = 1
+    w3 = 1  # More weight cuz we wanna trap the opponent. Crab mentality!
     center_scores = score_center_moves(game_state, ai_player_index)
     point_scores = score_difference(game_state, ai_player_index)
     opponent_reachable_scores = -score_not_reachable_by_opponent(
