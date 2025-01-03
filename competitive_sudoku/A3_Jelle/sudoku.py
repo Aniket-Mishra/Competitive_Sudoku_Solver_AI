@@ -68,7 +68,8 @@ class SudokuBoard(object):
         self.m = m
         self.n = n
         self.N = N  # N = m * n, numbers are in the range [1, ..., N]
-        self.squares = [SudokuBoard.empty] * (N * N)  # The N*N squares of the board
+        self.squares = [SudokuBoard.empty] * \
+            (N * N)  # The N*N squares of the board
 
     def square2index(self, square: Square) -> int:
         """
@@ -586,7 +587,8 @@ def parse_game_state(text: str, playmode: str) -> GameState:
         N = m * n
         words = text.strip().split()
         if len(words) != N * N:
-            raise ValueError("The number of squares in the sudoku board is incorrect.")
+            raise ValueError(
+                "The number of squares in the sudoku board is incorrect.")
         board = SudokuBoard(m, n)
 
         for k, word in enumerate(words):
@@ -622,7 +624,8 @@ def parse_game_state(text: str, playmode: str) -> GameState:
             return None
         items = remove_special_characters(text).strip().split()
         items = [int(item) for item in items]
-        assert len(items) == 2, "The number of elements in the scores list must be 2."
+        assert len(
+            items) == 2, "The number of elements in the scores list must be 2."
         return items
 
     def parse_squares(key: str) -> Optional[List[Square]]:
@@ -657,11 +660,13 @@ def parse_game_state(text: str, playmode: str) -> GameState:
         allowed_squares2 = None
     else:
         initial_board, _, _ = parse_board("initial-board", m, n)
-        board, occupied_squares1, occupied_squares2 = parse_board("board", m, n)
+        board, occupied_squares1, occupied_squares2 = parse_board(
+            "board", m, n)
         allowed_squares1 = parse_squares("allowed-squares1")
         allowed_squares2 = parse_squares("allowed-squares2")
         if allowed_squares1 is None or allowed_squares2 is None:
-            allowed_squares1, allowed_squares2 = allowed_squares(board, playmode)
+            allowed_squares1, allowed_squares2 = allowed_squares(
+                board, playmode)
 
     return GameState(
         initial_board=initial_board,
@@ -675,111 +680,3 @@ def parse_game_state(text: str, playmode: str) -> GameState:
         occupied_squares1=occupied_squares1,
         occupied_squares2=occupied_squares2,
     )
-
-
-class AdvancedSudokuAI(SudokuAI):
-    """Advanced Sudoku AI with enhanced heuristics for competitive play."""
-
-    def __init__(self):
-        super().__init__()
-
-    def evaluate(self, game_state: GameState, ai_player_index: int):
-        """Enhanced evaluation function with additional heuristics."""
-        # Weights for the evaluation components
-        w1, w2, w3 = 0.7, 0.2, 0.1
-
-        # Score difference as primary heuristic
-        score_diff = (
-            game_state.scores[ai_player_index] - game_state.scores[1 - ai_player_index]
-        )
-
-        # Remaining valid moves for opponent vs AI (blocking advantage)
-        opp_valid_moves = len(self.get_valid_moves_for_player(game_state, 3 - game_state.current_player))
-        ai_valid_moves = len(self.get_valid_moves_for_player(game_state, game_state.current_player))
-        move_diff = ai_valid_moves - opp_valid_moves
-
-        # Centrality heuristic: prefer moves closer to the center of the board
-        N = game_state.board.N
-        center = (N // 2, N // 2)
-        centrality_score = -sum(
-            abs(move.square[0] - center[0]) + abs(move.square[1] - center[1])
-            for move in self.get_valid_moves(game_state)
-        )
-
-        return w1 * score_diff + w2 * move_diff + w3 * centrality_score
-
-    def get_valid_moves_for_player(self, game_state: GameState, player: int):
-        """Get valid moves for a specific player."""
-        current_player = game_state.current_player
-        game_state.current_player = player
-        moves = self.get_valid_moves(game_state)
-        game_state.current_player = current_player  # Restore original player
-        return moves
-
-    def get_valid_moves(self, game_state: GameState):
-        """Enhanced valid moves to prioritize better moves."""
-        N = game_state.board.N
-
-        def is_valid_move(square, value):
-            return (
-                game_state.board.get(square) == SudokuBoard.empty
-                and not TabooMove(square, value) in game_state.taboo_moves
-                and (
-                    square in game_state.player_squares()
-                    if game_state.player_squares() is not None
-                    else True
-                )
-                and value
-                not in [game_state.board.get((square[0], col)) for col in range(N)]
-                and value
-                not in [game_state.board.get((row, square[1])) for row in range(N)]
-                and value not in self.get_region_values(game_state.board, square)
-            )
-
-        valid_moves = [
-            Move((i, j), value)
-            for i in range(N)
-            for j in range(N)
-            for value in range(1, N + 1)
-            if is_valid_move((i, j), value)
-        ]
-
-        # Rank moves by their impact on scoring
-        ranked_moves = sorted(
-            valid_moves,
-            key=lambda move: self.amount_of_regions_completed(game_state, move),
-            reverse=True,
-        )
-        return ranked_moves
-
-    def compute_best_move(self, game_state: GameState) -> None:
-        """Enhanced best move computation with dynamic depth."""
-        ai_player_index = game_state.current_player - 1
-        remaining_moves = (
-            game_state.board.board_height() * game_state.board.board_width()
-            - len(game_state.occupied_squares1)
-            - len(game_state.occupied_squares2)
-        )
-
-        depth = min(5, remaining_moves // 10)  # Dynamically adjust depth
-
-        valid_moves = self.get_valid_moves(game_state)
-        best_move = None
-        best_score = float("-inf")
-
-        for move in valid_moves:
-            next_state = self.simulate_move(game_state, move)
-            score = self.minimax(
-                next_state,
-                depth,
-                float("-inf"),
-                float("inf"),
-                maximizing=False,
-                ai_player_index=ai_player_index,
-            )
-            if score > best_score:
-                best_score = score
-                best_move = move
-
-        if best_move:
-            self.propose_move(best_move)
