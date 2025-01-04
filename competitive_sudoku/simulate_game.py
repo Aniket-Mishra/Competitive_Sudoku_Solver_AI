@@ -166,9 +166,9 @@ def simulate_game(game_state: GameState,
                     board_text = str(game_state.board)
                     options = f'--move "{game_state.board.square2index(square)} {value}"'
                     if player_squares is not None:
-                       allowed = ' '.join(str(game_state.board.square2index(
-                           square)) for square in player_squares)
-                       options += f' --allowed="{allowed}"'
+                        allowed = ' '.join(str(game_state.board.square2index(
+                            square)) for square in player_squares)
+                        options += f' --allowed="{allowed}"'
                     output = solve_sudoku(SUDOKU_SOLVER, board_text, options)
                     if 'Invalid move' in output:
                         print(
@@ -271,11 +271,11 @@ def main():
     cmdline_parser = argparse.ArgumentParser(
         description='Script for simulating a competitive sudoku game.')
     cmdline_parser.add_argument(
-        '--first', help="the module name of the first player's SudokuAI class (default: random_player)", default='A3_Jelle')
+        '--first', help="the module name of the first player's SudokuAI class (default: random_player)", default='greedy_player')
     cmdline_parser.add_argument(
-        '--second', help="the module name of the second player's SudokuAI class (default: random_player)", default='greedy_player')
+        '--second', help="the module name of the second player's SudokuAI class (default: random_player)", default='A3_MCTS')
     cmdline_parser.add_argument(
-        '--time', help="the time (in seconds) for computing a move (default: 0.5)", type=float, default=5)
+        '--time', help="the time (in seconds) for computing a move (default: 0.5)", type=float, default=0.5)
     cmdline_parser.add_argument(
         '--check', help="check if the solve_sudoku program works", action='store_true')
     cmdline_parser.add_argument(

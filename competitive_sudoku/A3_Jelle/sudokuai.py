@@ -68,4 +68,4 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
             valid_moves = [i[0]for i in sorted(depth_move_scores, key=lambda x: x[1], reverse=True)]
 
 
-# python .\simulate_game.py --first=minimax_v2 --second=minimax_v2 --board=boards/empty-3x3.txt
+# python .\simulate_game.py --first=A3_Jelle --second=greedy_player --board=boards/empty-3x3.txt
