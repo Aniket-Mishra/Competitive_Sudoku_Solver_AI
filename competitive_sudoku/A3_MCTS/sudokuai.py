@@ -20,60 +20,72 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
     def __init__(self):
         super().__init__()
 
+
     def compute_best_move(self, game_state: GameState) -> None:
         """
-        Minimax with iterative deepening depth  # ToDo - Caching if needed
+        Computes the best move for the AI using Monte Carlo Tree Search.
         """
+        ai_player_index = game_state.current_player - 1
+
+        # Initialize the Monte Carlo Tree with the current game state
+        mcts = MonteCarloTree(game_state, ai_player_index)
+
+        # Ensure the root node has children
+        if not mcts.root.children:
+            mcts.expand(mcts.root)
+
+        # Propose a random initial move in case computation is interrupted
         initial_moves = get_valid_moves(game_state)
-        initial_moves = naked_singles(game_state, initial_moves)
         initial_moves = [
             Move((row, col), value)
             for (row, col), values in initial_moves.items()
             for value in values
         ]
-
+        if not initial_moves:
+            return  # No valid moves, do nothing
         self.propose_move(random.choice(initial_moves))
 
-        our_agent = game_state.current_player - 1
-
-        mcts = MonteCarloTree(game_state)
-
-        result = mcts.simulate_playout(mcts.root)
-        mcts.backpropagate(mcts.root, result, our_agent)
-
+        # Perform MCTS iterations
         iteration = 0
-
         while True:
+            # Selection
             best_leaf_node = mcts.visit()
+
+            # Expansion
             if best_leaf_node.visit_count == 0:
                 selected_node = best_leaf_node
             else:
                 selected_node = mcts.expand(best_leaf_node)
-            
+
+            # Simulation
             result = mcts.simulate_playout(selected_node)
-            mcts.backpropagate(selected_node, result, our_agent)
 
+            # Backpropagation
+            mcts.backpropagate(selected_node, result)
+
+            # Propose the best move periodically
             if iteration % 5 == 0:
-                best_move = get_best_move(mcts, False)
+                best_move = self.get_best_move_from_tree(mcts, initial_moves)
                 self.propose_move(best_move)
-            
-            iteration += 1
-    
-def get_best_move(tree: MonteCarloTree, is_robust: bool = False):
-    root = tree.root
-    bestScore = float('-inf')
-    bestChild = None
-    
-    for child in root.children:
-        if child.visit_count == 0:
-            continue
-        score = child.visit_count if is_robust else (child.player_1_wins / child.visit_count)
 
-        if score > bestScore:
-            bestScore = score
-            bestChild = child
-        
-    return bestChild.move
+            iteration += 1
+
+
+    def get_best_move_from_tree(self, tree: MonteCarloTree, fallback_moves: list[Move]) -> Move:
+        """
+        Returns the best move from the MCTS tree based on visit count.
+        """
+        best_child = None
+        max_visits = -1
+
+        for child in tree.root.children:
+            if child.visit_count > max_visits:
+                max_visits = child.visit_count
+                best_child = child
+
+        # Fallback to a random valid move if no best child found
+        return best_child.move if best_child else random.choice(fallback_moves)
+
 
 
 # python .\simulate_game.py --first=A3_MCTS --second=greedy_player --board=boards/empty-3x3.txt

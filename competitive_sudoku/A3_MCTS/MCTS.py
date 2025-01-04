@@ -1,15 +1,8 @@
 import random
 import copy
-from competitive_sudoku.sudoku import (
-    GameState,
-    Move,
-    TabooMove,
-    SudokuBoard,
-)
-import competitive_sudoku.sudokuai
-from typing import Tuple
-from A3_MCTS.helper_functions import get_valid_moves, simulate_move, naked_singles
 import math
+from competitive_sudoku.sudoku import GameState, Move, SudokuBoard
+from A3_MCTS.helper_functions import get_valid_moves, simulate_move, naked_singles
 
 
 class MCTSNode:
@@ -24,30 +17,31 @@ class MCTSNode:
         self.visit_count = 0
 
     def add_child(self, child_node):
+        """Adds a child node to this node."""
         child_node.parent = self
         self.children.append(child_node)
 
 
 class MonteCarloTree:
-    def __init__(self, game_state: GameState, ):
+    def __init__(self, game_state: GameState, ai_player_index: int):
         self.root = MCTSNode(game_state, None)
+        self.ai_player_index = ai_player_index  # Track AI player index
 
     def visit(self):
+        """Selects the node with the highest UCT score."""
         current_node = self.root
-
         while current_node.children:
             best_score = float('-inf')
             best_node = None
-
             for child in random.sample(current_node.children, len(current_node.children)):
                 if best_score < child.UCT_Score:
                     best_score = child.UCT_Score
                     best_node = child
             current_node = best_node
-
         return current_node
 
     def expand(self, selected_node: MCTSNode):
+        """Expands the selected node by adding its children."""
         moves = get_valid_moves(selected_node.game_state)
         moves = naked_singles(selected_node.game_state, moves)
         valid_moves = [
@@ -55,7 +49,6 @@ class MonteCarloTree:
             for (row, col), values in moves.items()
             for value in values
         ]
-        
 
         if not selected_node.children:
             for move in valid_moves:
@@ -63,32 +56,33 @@ class MonteCarloTree:
                 child = MCTSNode(child_state, move)
                 selected_node.add_child(child)
 
-
-        return random.choice(selected_node.children) if moves else selected_node
+        return random.choice(selected_node.children) if valid_moves else selected_node
 
     def simulate_playout(self, selected_node: MCTSNode):
+        """Simulates a random playout from the selected node."""
         current_game_state = copy.deepcopy(selected_node.game_state)
         player1_out_of_moves = False
         player2_out_of_moves = False
 
         while True:
             if player1_out_of_moves and player2_out_of_moves:
-                score_difference = current_game_state.scores[0] - \
-                    current_game_state.scores[1]
+                score_difference = current_game_state.scores[self.ai_player_index] - \
+                    current_game_state.scores[1 - self.ai_player_index]
                 return 1 if score_difference > 0 else 2 if score_difference < 0 else 0
 
-            if (current_game_state.current_player == 1 and player1_out_of_moves) or (current_game_state.current_player == 2 and player2_out_of_moves):
+            if (current_game_state.current_player == 1 and player1_out_of_moves) or \
+               (current_game_state.current_player == 2 and player2_out_of_moves):
                 current_game_state.current_player = 3 - current_game_state.current_player
 
             moves = get_valid_moves(current_game_state)
-            moves = naked_singles(selected_node.game_state, moves)
+            moves = naked_singles(current_game_state, moves)
             valid_moves = [
                 Move((row, col), value)
                 for (row, col), values in moves.items()
                 for value in values
             ]
 
-            if len(valid_moves) == 0:
+            if not valid_moves:
                 if current_game_state.current_player == 1:
                     player1_out_of_moves = True
                 else:
@@ -98,9 +92,9 @@ class MonteCarloTree:
             current_game_state = simulate_move(
                 current_game_state, random.choice(valid_moves))
 
-    def backpropagate(self, simulated_node: MCTSNode, winner: int, player: int):
+    def backpropagate(self, simulated_node: MCTSNode, winner: int):
+        """Backpropagates the results of a playout through the tree."""
         current_node = simulated_node
-
         while current_node is not None:
             current_node.visit_count += 1
             if winner == 1:
@@ -110,26 +104,26 @@ class MonteCarloTree:
             elif winner == 0:
                 current_node.player_1_wins += 0.5
                 current_node.player_2_wins += 0.5
-            else:
-                pass
 
-            current_node.UCT_Score = calculate_score(current_node, player)
+            current_node.UCT_Score = calculate_score(
+                current_node, self.ai_player_index)
             current_node = current_node.parent
 
 
 def calculate_score(node: MCTSNode, player: int):
-    exploration_weight = 1.5
+    """Calculates the UCT score for a node."""
+    exploration_weight = 1.5 / \
+        math.sqrt(1 + node.visit_count)  # Decrease exploration over time
 
-    if node.parent is None:
-        return 0
+    if node.parent is None or node.parent.visit_count == 0:
+        return float('inf')  # Encourage exploration if parent has no visits
 
-    modifier = -1 if node.game_state.current_player == 0 else 1
-    nwins = modifier * node.player_1_wins if player == 0 else modifier * node.player_2_wins
-
+    modifier = 1 if player == node.game_state.current_player else -1
+    nwins = modifier * node.player_1_wins if player == 1 else modifier * node.player_2_wins
     nsim = node.visit_count
 
     if nsim == 0:
         return float('inf')
 
     ln_n = math.log(node.parent.visit_count)
-    return (nwins/nsim) + exploration_weight * math.sqrt(ln_n / nsim)
+    return (nwins / nsim) + exploration_weight * math.sqrt(ln_n / nsim)
