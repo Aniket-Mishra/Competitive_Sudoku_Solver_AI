@@ -275,7 +275,7 @@ def main():
     cmdline_parser.add_argument(
         '--second', help="the module name of the second player's SudokuAI class (default: random_player)", default='A3_MCTS')
     cmdline_parser.add_argument(
-        '--time', help="the time (in seconds) for computing a move (default: 0.5)", type=float, default=0.5)
+        '--time', help="the time (in seconds) for computing a move (default: 0.5)", type=float, default=1)
     cmdline_parser.add_argument(
         '--check', help="check if the solve_sudoku program works", action='store_true')
     cmdline_parser.add_argument(

@@ -50,7 +50,7 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
             depth_move_scores = []
             for move in valid_moves:
 
-                next_state = simulate_move(game_state, move, ai_player_index)
+                next_state = simulate_move(game_state, move)
                 score = minimax(next_state, depth, float(
                     "-inf"), float("inf"), maximizing=False, ai_player_index=ai_player_index, )
                 

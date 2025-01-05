@@ -35,7 +35,7 @@ def minimax(
         max_eval = float("-inf")
         for move in valid_moves:
 
-            next_state = simulate_move(game_state, move, ai_player_index)
+            next_state = simulate_move(game_state, move)
             eval = minimax(
                 next_state,
                 depth - 1,
@@ -52,7 +52,7 @@ def minimax(
     else:
         min_eval = float("inf")
         for move in valid_moves:
-            next_state = simulate_move(game_state, move, ai_player_index)
+            next_state = simulate_move(game_state, move)
             eval = minimax(
                 next_state,
                 depth - 1,
