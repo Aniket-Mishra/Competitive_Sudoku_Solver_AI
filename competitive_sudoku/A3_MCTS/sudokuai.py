@@ -36,6 +36,7 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
 
         # Propose a random initial move in case computation is interrupted
         initial_moves = get_valid_moves(game_state)
+        initial_moves = naked_singles(game_state, initial_moves)
         initial_moves = [
             Move((row, col), value)
             for (row, col), values in initial_moves.items()
