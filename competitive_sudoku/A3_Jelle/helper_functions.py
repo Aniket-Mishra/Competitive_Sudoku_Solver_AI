@@ -19,6 +19,60 @@ def get_region_values(board: SudokuBoard, square: Tuple[int, int]):
     ]
     return region_values
 
+def get_illegal_moves(game_state, last_move=None):
+    board = game_state.board
+    N = board.N
+
+    illegal_moves = []
+    if last_move is not None:
+        row, col = last_move.square
+        value = last_move.value
+
+
+        for i in range(1, N+1):
+            illegal_moves.append(((row,col), i))
+
+        # Add all squares in the same row
+        for c in range(N):
+            if (row, c) != (row, col):  # Skip the square where the move was just played
+                illegal_moves.append(((row, c), value))
+
+        # Add all squares in the same column
+        for r in range(N):
+            if (r, col) != (row, col):  # Skip the square where the move was just played
+                illegal_moves.append(((r, col), value))
+    
+        # Add all squares in the same region
+        region_start_row = (row // board.region_height()) * board.region_height()
+        region_start_col = (col // board.region_width()) * board.region_width()
+        for r in range(region_start_row, region_start_row + board.region_height()):
+            for c in range(region_start_col, region_start_col + board.region_width()):
+                if (r, c) != (row, col):  # Skip the square where the move was just played
+                    illegal_moves.append(((r, c), value))
+
+    opponent_occupied_squares = (
+        game_state.occupied_squares2 if game_state.current_player == 1 else game_state.occupied_squares1
+    )
+    for square in opponent_occupied_squares:
+        r, c = square
+        v = board.get(square)
+        if v != SudokuBoard.empty:  # Only add if there's a value
+            # Add all row, column, and region constraints for opponent's value
+            for i in range(N):
+                illegal_moves.append(((r, i), v))  # Same row
+                illegal_moves.append(((i, c), v))  # Same column
+
+            region_start_row = (r // board.region_height()
+                                ) * board.region_height()
+            region_start_col = (c // board.region_width()
+                                ) * board.region_width()
+            for rr in range(region_start_row, region_start_row + board.region_height()):
+                for cc in range(region_start_col, region_start_col + board.region_width()):
+                    illegal_moves.append(((rr, cc), v))  # Same region
+                    
+    return set(illegal_moves)
+
+    
 
 def get_valid_moves(game_state):
     N = game_state.board.N

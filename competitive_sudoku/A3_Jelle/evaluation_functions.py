@@ -27,10 +27,8 @@ def score_center_moves(game_state: GameState, ai_player_index):
         row_prox += abs(row - center)
         col_prox += abs(col - center)
 
-    if ai_player_index == 0:
-        return -(row_weight * col_weight + col_weight * col_prox)
-    else:
-        return row_weight * col_weight + col_weight * col_prox
+    return -(row_weight * col_weight + col_weight * col_prox)
+
 
 
 def score_not_reachable_by_opponent(

@@ -1,5 +1,5 @@
-from competitive_sudoku.sudoku import GameState, Move
-from A3_Jelle.helper_functions import simulate_move, get_valid_moves
+from competitive_sudoku.sudoku import GameState, Move, SudokuBoard
+from A3_Jelle.helper_functions import simulate_move, get_valid_moves, get_illegal_moves
 from A3_Jelle.taboo_helpers import naked_singles
 from A3_Jelle.evaluation_functions import (
     score_center_moves,
@@ -15,18 +15,17 @@ def minimax(
     beta: int,
     maximizing: bool,
     ai_player_index: int,
+    illegal_moves
 ):
     """
     Minimax implementation with depth-limited search.
     """
-    valid_moves_dict = get_valid_moves(game_state)
-    # valid_moves = naked_singles(game_state, valid_moves_dict)
-
-    valid_moves = [
-        Move((row, col), value)
-        for (row, col), values in valid_moves_dict.items()
-        for value in values
-    ]
+    N = game_state.board.N
+    valid_moves = []
+    for square in game_state.player_squares():
+        for i in range(1, N+1):
+            if (square, i) not in illegal_moves and game_state.board.get(square) == SudokuBoard.empty and Move(square, i) not in game_state.taboo_moves:
+                valid_moves.append(Move(square, i))
 
     if depth == 0 or is_terminal(game_state):
         return evaluate(game_state, ai_player_index)
@@ -36,6 +35,8 @@ def minimax(
         for move in valid_moves:
 
             next_state = simulate_move(game_state, move)
+            new_illegal_moves = get_illegal_moves(game_state, move)
+
             eval = minimax(
                 next_state,
                 depth - 1,
@@ -43,6 +44,7 @@ def minimax(
                 beta,
                 maximizing=False,
                 ai_player_index=ai_player_index,
+                illegal_moves=new_illegal_moves
             )
             max_eval = max(max_eval, eval)
             alpha = max(alpha, eval)
@@ -52,7 +54,10 @@ def minimax(
     else:
         min_eval = float("inf")
         for move in valid_moves:
+
             next_state = simulate_move(game_state, move)
+            new_illegal_moves = get_illegal_moves(game_state, move)
+
             eval = minimax(
                 next_state,
                 depth - 1,
@@ -60,6 +65,7 @@ def minimax(
                 beta,
                 maximizing=True,
                 ai_player_index=ai_player_index,
+                illegal_moves=new_illegal_moves
             )
             min_eval = min(min_eval, eval)
             beta = min(beta, eval)
@@ -94,7 +100,5 @@ def evaluate(
     opponent_reachable_scores = -score_not_reachable_by_opponent(
         game_state, ai_player_index
     )
-    # print(center_scores)
-    # print(point_scores)
-    # print(opponent_reachable_scores)
+
     return w1 * center_scores + w2 * point_scores + w3 * opponent_reachable_scores

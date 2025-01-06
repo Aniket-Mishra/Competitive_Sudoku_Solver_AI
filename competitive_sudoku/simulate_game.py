@@ -271,7 +271,7 @@ def main():
     cmdline_parser = argparse.ArgumentParser(
         description='Script for simulating a competitive sudoku game.')
     cmdline_parser.add_argument(
-        '--first', help="the module name of the first player's SudokuAI class (default: random_player)", default='A3_MCTS')
+        '--first', help="the module name of the first player's SudokuAI class (default: random_player)", default='greedy_player')
     cmdline_parser.add_argument(
         '--second', help="the module name of the second player's SudokuAI class (default: random_player)", default='A3_Jelle')
     cmdline_parser.add_argument(
