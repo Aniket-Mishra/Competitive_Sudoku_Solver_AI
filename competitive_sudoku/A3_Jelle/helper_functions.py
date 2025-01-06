@@ -63,6 +63,15 @@ def get_valid_moves(game_state):
                     valid_moves[(i, j)].append(value)
     return valid_moves
 
+def filter_moves(game_state, all_moves):
+    allowed_squares = game_state.player_squares()
+
+    # Filter out squares not in allowed_squares
+    return [
+        Move(square, val)
+        for square, val in all_moves.items()
+        if square in allowed_squares
+    ]
 
 def naked_singles(game_state: GameState, valid_moves):
     N = game_state.board.N

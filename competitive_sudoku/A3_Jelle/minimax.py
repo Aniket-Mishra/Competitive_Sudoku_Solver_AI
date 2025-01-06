@@ -1,11 +1,12 @@
 from competitive_sudoku.sudoku import GameState, Move
-from A3_Jelle.helper_functions import simulate_move, get_valid_moves
+from A3_Jelle.helper_functions import simulate_move, get_valid_moves, filter_moves
 from A3_Jelle.taboo_helpers import naked_singles
 from A3_Jelle.evaluation_functions import (
     score_center_moves,
     score_difference,
     score_not_reachable_by_opponent,
 )
+from A3_Jelle.tt import solve_sudoku
 
 
 def minimax(
@@ -19,14 +20,8 @@ def minimax(
     """
     Minimax implementation with depth-limited search.
     """
-    valid_moves_dict = get_valid_moves(game_state)
-    # valid_moves = naked_singles(game_state, valid_moves_dict)
-
-    valid_moves = [
-        Move((row, col), value)
-        for (row, col), values in valid_moves_dict.items()
-        for value in values
-    ]
+    _, all_moves, _ = solve_sudoku(game_state)
+    valid_moves = filter_moves(game_state, all_moves)
 
     if depth == 0 or is_terminal(game_state):
         return evaluate(game_state, ai_player_index)
