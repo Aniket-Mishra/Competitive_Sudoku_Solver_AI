@@ -1,14 +1,31 @@
 from competitive_sudoku.sudoku import GameState
 
 
-def score_difference(game_state, ai_player_index):
+def score_difference(game_state: GameState, ai_player_index: int) -> float:
+    """
+    Calculate game state
+
+    Args:
+        game_state (GameState): Current game state
+        ai_player_index (int): integer denoting our current player index
+
+    Returns:
+        float: score diff b/w our agent vs enemy
+    """
     return game_state.scores[ai_player_index] - game_state.scores[1 - ai_player_index]
 
 
-def score_center_moves(game_state: GameState, ai_player_index):
+def score_center_moves(game_state: GameState, ai_player_index) -> float:
     """
     Calculates the score for a node, rewarding moves closer to the center.
     Always evaluates from the perspective of the AI player.
+
+    Args:
+        game_state (GameState): Current game state
+        ai_player_index (int): index of our agent
+
+    Returns:
+        float: score of the move
     """
     row_weight = 1
     col_weight = 0.5
@@ -27,8 +44,12 @@ def score_center_moves(game_state: GameState, ai_player_index):
         row_prox += abs(row - center)
         col_prox += abs(col - center)
 
-    return -(row_weight * col_weight + col_weight * col_prox)
+    num_squares = len(ai_squares)
+    if num_squares > 0:
+        row_prox /= num_squares
+        col_prox /= num_squares
 
+    return -(row_weight * col_weight + col_weight * col_prox)
 
 
 def score_not_reachable_by_opponent(
@@ -56,7 +77,7 @@ def score_not_reachable_by_opponent(
         if square in opponent_allowed_squares:
             score += 1
         else:
-            score -= 7
+            score -= 6
 
     if max_score > 0:
         normalized_score = score / max_score

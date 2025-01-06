@@ -3,6 +3,42 @@ import copy
 from typing import Tuple
 
 
+def get_illegal_moves(new_state: GameState, old_state: GameState = None):
+    board = new_state.board
+    N = new_state.board.N
+
+    if old_state is None or old_state.board == new_state.board:
+        remaining_squares = new_state.occupied_squares1 + new_state.occupied_squares2
+    else:
+        old_squares = old_state.occupied_squares1 + old_state.occupied_squares2
+        new_squares = new_state.occupied_squares1 + new_state.occupied_squares2
+        remaining_squares = list(set(new_squares) - set(old_squares))
+
+
+    illegal_moves = set()
+    for square in remaining_squares:
+        value = board.get(square)
+        if value != SudokuBoard.empty:
+            row, col = square
+
+            
+            # Add all squares in the same row
+            for c in range(N):
+                illegal_moves.add(((row, c), value))
+
+            # Add all squares in the same column
+            for r in range(N):
+                illegal_moves.add(((r, col), value))
+
+            # Add all squares in the same region
+            region_start_row = (row // board.region_height()) * board.region_height()
+            region_start_col = (col // board.region_width()) * board.region_width()
+            for r in range(region_start_row, region_start_row + board.region_height()):
+                for c in range(region_start_col, region_start_col + board.region_width()):
+                    illegal_moves.add(((r, c), value))
+
+    return illegal_moves
+
 def get_region_values(board: SudokuBoard, square: Tuple[int, int]):
     """
     Gets the values in the region corresponding to the given square.
