@@ -11,6 +11,9 @@ from typing import List, Tuple, Union, Any, Optional, Iterator
 Square = Tuple[int, int]
 
 
+# """
+#     Too much documentation to change, I ain't gon do that, I am sorry.
+# """
 class SudokuSettings(object):
     print_ascii_states: bool = False  # Print game states in ascii format
 

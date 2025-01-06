@@ -7,10 +7,11 @@ from competitive_sudoku.sudoku import (
     SudokuBoard,
 )
 import competitive_sudoku.sudokuai
-from A3_MCTS.helper_functions import get_valid_moves, naked_singles
+from A3_MCTS.helper_functions import get_valid_moves
+from A3_MCTS.taboo_helpers import naked_singles, hidden_singles
+
 import time
 from A3_MCTS.MCTS import MonteCarloTree
-from A3_MCTS.MCTS2 import MonteCarloTree2
 
 
 class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
@@ -33,6 +34,7 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
             mcts.expand(mcts.root)
 
         initial_moves = get_valid_moves(game_state)
+        initial_moves = naked_singles(game_state, initial_moves)
         initial_moves = [
             Move((row, col), value)
             for (row, col), values in initial_moves.items()

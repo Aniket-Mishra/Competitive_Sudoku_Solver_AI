@@ -1,26 +1,43 @@
 from competitive_sudoku.sudoku import SudokuBoard, GameState, Move, TabooMove
 import copy
-from typing import Tuple
+from typing import Tuple, Dict, List
 
 
-def get_region_values(board: SudokuBoard, square: Tuple[int, int]):
+def get_region_values(board: SudokuBoard, square: Tuple[int, int]) -> List:
     """
     Gets the values in the region corresponding to the given square.
+
+    Args:
+        board (SudokuBoard): the sudoku board
+        square (Tuple[int, int]): the square to get region value
+
+    Returns:
+        List: List of region values
     """
+
     region_width = board.region_width()
     region_height = board.region_height()
     start_row = (square[0] // region_height) * region_height
     start_col = (square[1] // region_width) * region_width
 
     region_values = [
-        board.get((r, c))
-        for r in range(start_row, start_row + region_height)
-        for c in range(start_col, start_col + region_width)
+        board.get((row, col))
+        for row in range(start_row, start_row + region_height)
+        for col in range(start_col, start_col + region_width)
     ]
     return region_values
 
 
-def get_valid_moves(game_state):
+def get_valid_moves(game_state: GameState) -> Dict:
+    """
+    Get a dict of all valid moves for player
+
+    Args:
+        game_state (GameState): Current game sttae
+
+    Returns:
+        Dict: Valid moves dict
+    """
     N = game_state.board.N
     board = game_state.board
     player_squares = set(game_state.player_squares())
@@ -48,10 +65,10 @@ def get_valid_moves(game_state):
         for j in range(0, N, region_width):
             region = (i // region_height, j // region_width)
             region_values[region] = set(
-                board.get((r, c))
-                for r in range(i, i + region_height)
-                for c in range(j, j + region_width)
-                if board.get((r, c)) != SudokuBoard.empty
+                board.get((row, col))
+                for row in range(i, i + region_height)
+                for col in range(j, j + region_width)
+                if board.get((row, col)) != SudokuBoard.empty
             )
 
     def possible(i, j, value):
@@ -76,55 +93,30 @@ def get_valid_moves(game_state):
     return valid_moves
 
 
-def naked_singles(game_state: GameState, valid_moves):
-    N = game_state.board.N
-
-    for naked_single in valid_moves:
-        if len(valid_moves[naked_single]) == 1:
-            single_row = naked_single[0]
-            single_column = naked_single[1]
-            single_value = valid_moves[naked_single][0]
-
-            for i in range(N):
-                if (
-                    i != single_row
-                    and (i, single_column) in valid_moves
-                    and single_value in valid_moves[(i, single_column)]
-                ):
-                    valid_moves[(i, single_column)].remove(single_value)
-                    game_state.taboo_moves.append(
-                        TabooMove((i, single_column), single_value)
-                    )
-
-            for i in range(N):
-                if (
-                    i != single_column
-                    and (single_row, i) in valid_moves
-                    and single_value in valid_moves[(single_row, i)]
-                ):
-                    valid_moves[(single_row, i)].remove(single_value)
-                    game_state.taboo_moves.append(
-                        TabooMove((single_row, i), single_value)
-                    )
-    return valid_moves
-
-
-def amount_of_regions_completed(game_state: GameState, move: Move):
+def amount_of_regions_completed(game_state: GameState, move: Move) -> int:
     """
     Checks how many regions (rows, columns, blocks) are completed by the move.
+
+    Args:
+        game_state (GameState): current game state
+        move (Move): Move object to check completion
+
+    Returns:
+        int: No of regions completed
     """
     completed = 0
     N = game_state.board.N
     row, col = move.square
 
-    # Check row
     if all(
-        game_state.board.get((row, c)) != SudokuBoard.empty for c in range(N)
+        game_state.board.get((row, col)) != SudokuBoard.empty
+        for col in range(N)
     ):
         completed += 1
 
     if all(
-        game_state.board.get((r, col)) != SudokuBoard.empty for r in range(N)
+        game_state.board.get((row, col)) != SudokuBoard.empty
+        for row in range(N)
     ):
         completed += 1
 
@@ -133,20 +125,29 @@ def amount_of_regions_completed(game_state: GameState, move: Move):
     start_row = (row // region_height) * region_height
     start_col = (col // region_width) * region_width
     if all(
-        game_state.board.get((r, c)) != SudokuBoard.empty
-        for r in range(start_row, start_row + region_height)
-        for c in range(start_col, start_col + region_width)
+        game_state.board.get((row, col)) != SudokuBoard.empty
+        for row in range(start_row, start_row + region_height)
+        for col in range(start_col, start_col + region_width)
     ):
         completed += 1
 
     return completed
 
 
-def simulate_move(game_state: GameState, move: Move):
+def simulate_move(game_state: GameState, move: Move) -> GameState:
     """
     Simulates a move and updates allowed squares and occupied squares correctly.
+
+    Args:
+        game_state (GameState): current game state
+        move (Move): move to make
+        ai_player_index (int): integer denoting our agent index
+
+    Returns:
+        GameState: simulated gamesatte
     """
-    score_dict = {0: 0, 1: 2, 2: 4, 3: 7}
+
+    score_dict = {0: 0, 1: 1, 2: 3, 3: 7}
     new_state = copy.deepcopy(game_state)
     new_state.board.put(move.square, move.value)
     new_state.moves.append(move)
@@ -161,6 +162,7 @@ def simulate_move(game_state: GameState, move: Move):
         completed_regions
     ]
 
+    # Switch the current player
     new_state.current_player = 3 - new_state.current_player
 
     return new_state

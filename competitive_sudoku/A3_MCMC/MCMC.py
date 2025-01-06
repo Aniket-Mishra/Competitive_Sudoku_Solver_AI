@@ -5,6 +5,7 @@ import time
 from competitive_sudoku.sudoku import GameState, Move, SudokuBoard
 
 from A3_MCMC.helper_functions import get_valid_moves, simulate_move
+from A3_MCMC.taboo_helpers import naked_singles
 
 
 def score_trap_opponent(game_state: GameState, ai_player_index: int) -> float:
@@ -16,6 +17,8 @@ def score_trap_opponent(game_state: GameState, ai_player_index: int) -> float:
     opponent_index = 1 - ai_player_index
     game_state.current_player = opponent_index + 1
     opp_moves = get_valid_moves(game_state)
+    moves_dict = naked_singles(game_state, moves_dict)
+
     game_state.current_player = original_player
 
     total_moves = sum(len(vals) for vals in opp_moves.values())
@@ -57,34 +60,14 @@ def score_state(game_state: GameState, ai_player_index: int) -> float:
     )
 
 
-# def rollout_evaluation(
-#     state: GameState, ai_player_index: int, max_depth: int = 10
-# ) -> float:
-#     """
-#     Optionally do random playout for 'max_depth' moves,
-#     then evaluate the resulting board with 'score_state'.
-#     """
-#     current = copy.deepcopy(state)
-#     for _ in range(max_depth):
-#         moves_dict = get_valid_moves(current)
-#         moves_list = [
-#             Move((r, c), v)
-#             for (r, c), vals in moves_dict.items()
-#             for v in vals
-#         ]
-#         if not moves_list:
-#             break
-#         mv = random.choice(moves_list)
-#         current = simulate_move(current, mv)
-#     return score_state(current, ai_player_index)
-
-
 def rollout_evaluation(
     state: GameState, ai_player_index: int, max_depth: int = 10
 ) -> float:
-    current = copy.deepcopy(state)
+    game_state = copy.deepcopy(state)
     for _ in range(max_depth):
-        moves_dict = get_valid_moves(current)
+        moves_dict = get_valid_moves(game_state)
+        moves_dict = naked_singles(game_state, moves_dict)
+
         if not moves_dict:
             break
 
@@ -92,7 +75,7 @@ def rollout_evaluation(
         for (r, c), vals in moves_dict.items():
             for v in vals:
                 mv = Move((r, c), v)
-                nxt = simulate_move(current, mv)
+                nxt = simulate_move(game_state, mv)
                 sc = score_state(nxt, ai_player_index)
                 all_moves.append((mv, sc))
 
@@ -104,9 +87,9 @@ def rollout_evaluation(
         top_moves = all_moves[: max(1, len(all_moves) // 10)]
 
         chosen_mv = random.choice(top_moves)[0]
-        current = simulate_move(current, chosen_mv)
+        game_state = simulate_move(game_state, chosen_mv)
 
-    return score_state(current, ai_player_index)
+    return score_state(game_state, ai_player_index)
 
 
 def weighted_random_move(
@@ -117,6 +100,8 @@ def weighted_random_move(
     ~ exp( rollout_score / temperature ) (softmax).
     """
     moves_dict = get_valid_moves(game_state)
+    moves_dict = naked_singles(game_state, moves_dict)
+
     moves_list = []
     for (r, c), vals in moves_dict.items():
         for v in vals:
@@ -199,6 +184,7 @@ def mcmc_search(
             temperature = 0.2
 
         moves_dict = get_valid_moves(current_state)
+        moves_dict = naked_singles(current_state, moves_dict)
         moves_list = [
             Move((r, c), v)
             for (r, c), vals in moves_dict.items()

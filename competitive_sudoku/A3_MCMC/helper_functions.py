@@ -117,19 +117,16 @@ def amount_of_regions_completed(game_state: GameState, move: Move):
     N = game_state.board.N
     row, col = move.square
 
-    # Check row
     if all(
         game_state.board.get((row, c)) != SudokuBoard.empty for c in range(N)
     ):
         completed += 1
 
-    # Check column
     if all(
         game_state.board.get((r, col)) != SudokuBoard.empty for r in range(N)
     ):
         completed += 1
 
-    # Check block
     region_width = game_state.board.region_width()
     region_height = game_state.board.region_height()
     start_row = (row // region_height) * region_height

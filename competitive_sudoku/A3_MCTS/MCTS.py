@@ -7,11 +7,12 @@ from competitive_sudoku.sudoku import GameState, Move, SudokuBoard
 from A3_MCTS.helper_functions import (
     get_valid_moves,
     simulate_move,
-    naked_singles,
 )
-from team03_A2.minimax import (
+from A3_MCTS.minimax import (
     minimax,
 )
+
+from A3_MCTS.taboo_helpers import naked_singles, hidden_singles
 
 
 def score_mobility(game_state: GameState, ai_player_index: int) -> float:
@@ -19,12 +20,14 @@ def score_mobility(game_state: GameState, ai_player_index: int) -> float:
     original_player = game_state.current_player
     game_state.current_player = ai_player_index + 1
     ai_moves = get_valid_moves(game_state)
+    ai_moves = naked_singles(game_state, ai_moves)
     ai_count = sum(len(vals) for vals in ai_moves.values())
 
     # Opponent
     opp_index = 1 - ai_player_index
     game_state.current_player = opp_index + 1
     opp_moves = get_valid_moves(game_state)
+    opp_moves = naked_singles(game_state, opp_moves)
     opp_count = sum(len(vals) for vals in opp_moves.values())
 
     game_state.current_player = original_player
@@ -79,17 +82,18 @@ def evaluate_domain_heuristics(
 
 
 def HYBRID_DEPTH_THRESHOLD() -> int:
-    return 5
+    return 2
 
 
 def call_minimax_for_evaluation(
     game_state: GameState, ai_player_index: int
 ) -> float:
     valid_moves_dict = get_valid_moves(game_state)
+    valid_moves_dict = naked_singles(game_state, valid_moves_dict)
     valid_moves = []
-    for (r, c), vals in valid_moves_dict.items():
+    for (row, col), vals in valid_moves_dict.items():
         for v in vals:
-            valid_moves.append(Move((r, c), v))
+            valid_moves.append(Move((row, col), v))
 
     if not valid_moves:
         return float("-inf")
@@ -125,7 +129,9 @@ def rollout_simulation(
     moves_dict = get_valid_moves(game_state)
     moves_dict = naked_singles(game_state, moves_dict)
     valid_moves = [
-        Move((r, c), v) for (r, c), vals in moves_dict.items() for v in vals
+        Move((row, col), v)
+        for (row, col), vals in moves_dict.items()
+        for v in vals
     ]
     if not valid_moves:
         return evaluate_domain_heuristics(game_state, ai_player_index)
@@ -152,7 +158,7 @@ class MCTSNode:
         self.children.append(child_node)
 
 
-def ucb_score(node: "MCTSNode", c=1.4) -> float:
+def ucb_score(node: "MCTSNode", col=1.4) -> float:
     if (
         node.visit_count == 0
         or node.parent is None
@@ -162,7 +168,7 @@ def ucb_score(node: "MCTSNode", c=1.4) -> float:
 
     exploit = node.value_sum / node.visit_count
     n_parent = node.parent.visit_count
-    explore = c * math.sqrt(math.log(n_parent) / node.visit_count)
+    explore = col * math.sqrt(math.log(n_parent) / node.visit_count)
     return exploit + explore
 
 
@@ -198,7 +204,7 @@ class MonteCarloTree:
         current_node = self.root
         while current_node.children:
             current_node = max(
-                current_node.children, key=lambda c: c.UCT_Score
+                current_node.children, key=lambda col: col.UCT_Score
             )
         return current_node
 
@@ -206,9 +212,9 @@ class MonteCarloTree:
         moves_dict = get_valid_moves(node.game_state)
         moves_dict = naked_singles(node.game_state, moves_dict)
         valid_moves = [
-            Move((r, c), v)
-            for (r, c), vals in moves_dict.items()
-            for v in vals
+            Move((row, col), value)
+            for (row, col), vals in moves_dict.items()
+            for value in vals
         ]
 
         expanded_moves = {
@@ -217,18 +223,18 @@ class MonteCarloTree:
             if child.move
         }
         unexpanded = [
-            mv
-            for mv in valid_moves
-            if (mv.square, mv.value) not in expanded_moves
+            move
+            for move in valid_moves
+            if (move.square, move.value) not in expanded_moves
         ]
         if not unexpanded:
             return node
 
         random.shuffle(unexpanded)
         new_moves = unexpanded[:max_new_children]
-        for mv in new_moves:
-            nxt_state = simulate_move(node.game_state, mv)
-            child_node = self._get_or_create_node(nxt_state, mv)
+        for move in new_moves:
+            nxt_state = simulate_move(node.game_state, move)
+            child_node = self._get_or_create_node(nxt_state, move)
             if child_node.parent is None:
                 child_node.parent = node
                 node.children.append(child_node)
@@ -267,5 +273,5 @@ class MonteCarloTree:
     def best_move(self) -> Move | None:
         if not self.root.children:
             return None
-        best_child = max(self.root.children, key=lambda c: c.visit_count)
+        best_child = max(self.root.children, key=lambda x: x.visit_count)
         return best_child.move
