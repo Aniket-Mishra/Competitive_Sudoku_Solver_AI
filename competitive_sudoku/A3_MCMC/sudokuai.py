@@ -24,7 +24,6 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
     def compute_best_move(self, game_state: GameState) -> None:
         ai_index = game_state.current_player - 1
 
-        # Quick fallback
         moves_dict = get_valid_moves(game_state)
         all_moves = []
         for (r, c), vals in moves_dict.items():

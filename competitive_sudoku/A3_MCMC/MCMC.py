@@ -198,7 +198,6 @@ def mcmc_search(
         if temperature < 0.2:
             temperature = 0.2
 
-        # Gather valid moves
         moves_dict = get_valid_moves(current_state)
         moves_list = [
             Move((r, c), v)

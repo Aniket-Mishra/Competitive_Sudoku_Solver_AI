@@ -4,7 +4,6 @@ import copy
 import time
 from competitive_sudoku.sudoku import GameState, Move, SudokuBoard
 
-# Adjust imports to your environment
 from A3_MCTS.helper_functions import (
     get_valid_moves,
     simulate_move,
@@ -12,11 +11,7 @@ from A3_MCTS.helper_functions import (
 )
 from team03_A2.minimax import (
     minimax,
-)  # or wherever your old minimax is located
-
-########################################################
-#               DOMAIN HEURISTICS
-########################################################
+)
 
 
 def score_mobility(game_state: GameState, ai_player_index: int) -> float:
@@ -83,11 +78,6 @@ def evaluate_domain_heuristics(
     return w_mobility * mob + w_near_comp * near_comp + w_diff * diff
 
 
-########################################################
-#           ROLLOUT / HYBRID WITH MINIMAX
-########################################################
-
-
 def HYBRID_DEPTH_THRESHOLD() -> int:
     return 5
 
@@ -147,11 +137,6 @@ def rollout_simulation(
     )
 
 
-########################################################
-#          MCTS NODE & TRANSPOSITION TABLE
-########################################################
-
-
 class MCTSNode:
     def __init__(self, game_state: GameState, move: Move | None):
         self.game_state = game_state
@@ -193,15 +178,10 @@ def state_key(game_state: GameState) -> tuple:
     )
 
 
-########################################################
-#                  MCTS Tree
-########################################################
-
-
 class MonteCarloTree:
     def __init__(self, game_state: GameState, ai_player_index: int):
         self.ai_player_index = ai_player_index
-        self.transposition_table = {}  # <-- Define before creating root
+        self.transposition_table = {}
         self.root = self._get_or_create_node(game_state, move=None)
 
     def _get_or_create_node(self, game_state: GameState, move: Move | None):
@@ -249,7 +229,6 @@ class MonteCarloTree:
         for mv in new_moves:
             nxt_state = simulate_move(node.game_state, mv)
             child_node = self._get_or_create_node(nxt_state, mv)
-            # Link child if it has no parent
             if child_node.parent is None:
                 child_node.parent = node
                 node.children.append(child_node)

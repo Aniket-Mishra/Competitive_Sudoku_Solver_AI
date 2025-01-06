@@ -12,11 +12,8 @@ from A3_MCTS.helper_functions import (
 )
 from team03_A2.minimax import (
     minimax,
-)  # or wherever your old minimax is located
+)
 
-###############################################################################
-#                          HELPER FUNCTIONS
-###############################################################################
 from typing import Dict, List, Any, Optional, Tuple
 
 
@@ -30,9 +27,7 @@ def get_valid_moves(game_state: GameState) -> Dict[Tuple[int, int], List[int]]:
     for row in range(N):
         for col in range(N):
             idx = row * N + col
-            if game_state.board.squares[idx] == 0:  # empty
-                # Example: allow any digit from 1..N (not checking Sudoku constraints here!)
-                # Replace with real Sudoku validation
+            if game_state.board.squares[idx] == 0:
                 valid_moves[(row, col)] = list(range(1, N + 1))
     return valid_moves
 
@@ -47,10 +42,8 @@ def simulate_move(game_state, move: Move):
     row, col = move.square
     val = move.value
 
-    # Place the value on the board
     next_state.board.put((row, col), val)
 
-    # Update occupant squares (lists, not sets!)
     if next_state.current_player == 1:
         if (row, col) not in next_state.occupied_squares1:
             next_state.occupied_squares1.append((row, col))
@@ -58,10 +51,8 @@ def simulate_move(game_state, move: Move):
         if (row, col) not in next_state.occupied_squares2:
             next_state.occupied_squares2.append((row, col))
 
-    # (Optional) Update scores if your game logic says so.
     next_state.scores[next_state.current_player - 1] += 1
 
-    # Switch player
     next_state.current_player = 2 if next_state.current_player == 1 else 1
 
     return next_state
@@ -70,17 +61,8 @@ def simulate_move(game_state, move: Move):
 def naked_singles(
     game_state: GameState, moves_dict: Dict[Tuple[int, int], List[int]]
 ) -> Dict[Tuple[int, int], List[int]]:
-    """
-    Example placeholder for applying Sudoku constraints to reduce possible moves.
-    Replace with your actual 'naked_singles' logic or more advanced constraints.
-    """
-    # For demonstration, we do nothing and just return moves_dict as is.
+    """Naked signles, I am too dumb to implement this yet"""
     return moves_dict
-
-
-###############################################################################
-#                          MINIMAX (Simplified)
-###############################################################################
 
 
 def is_terminal_state(game_state: GameState) -> bool:
@@ -90,7 +72,6 @@ def is_terminal_state(game_state: GameState) -> bool:
     moves = get_valid_moves(game_state)
     if not moves:
         return True
-    # or check if board is fully occupied:
     if all(v != 0 for v in game_state.board.squares):
         return True
     return False
@@ -100,34 +81,27 @@ def evaluate_state(game_state: GameState, ai_player_index: int) -> float:
     """
     Simple evaluation for demonstration. Adjust as needed.
     """
-    # e.g., difference in scores
     return (
         game_state.scores[ai_player_index]
         - game_state.scores[1 - ai_player_index]
     )
 
 
-###############################################################################
-#                        DOMAIN-SPECIFIC HEURISTICS
-###############################################################################
-
-
 def score_mobility(game_state: GameState, ai_player_index: int) -> float:
     """Number of moves AI can make minus number of moves the opponent can make."""
     original_player = game_state.current_player
 
-    # AI
+    # Our baby
     game_state.current_player = ai_player_index + 1
     ai_moves = get_valid_moves(game_state)
     ai_count = sum(len(vals) for vals in ai_moves.values())
 
-    # Opponent
+    # enemy
     opp_index = 1 - ai_player_index
     game_state.current_player = opp_index + 1
     opp_moves = get_valid_moves(game_state)
     opp_count = sum(len(vals) for vals in opp_moves.values())
 
-    # restore
     game_state.current_player = original_player
 
     return ai_count - opp_count
@@ -182,11 +156,6 @@ def evaluate_domain_heuristics(
     return w_mobility * mob + w_near_comp * near_comp + w_diff * diff
 
 
-###############################################################################
-#                       MCTS + MINIMAX HYBRID
-###############################################################################
-
-
 def HYBRID_DEPTH_THRESHOLD() -> int:
     return 5  # If you want to experiment, reduce or increase this.
 
@@ -204,10 +173,8 @@ def call_minimax_for_evaluation(
             valid_moves.append(Move((r, c), v))
 
     if not valid_moves:
-        # No valid moves => negative infinity or some terminal scoring
         return float("-inf")
 
-    # You can set the search_depth to 2 or 3, etc.
     search_depth = 2
     best_score = float("-inf")
     for move in valid_moves:
@@ -234,7 +201,6 @@ def rollout_simulation(game_state, max_depth=5) -> float:
     current_state = copy.deepcopy(game_state)
 
     while depth < max_depth:
-        # Get all valid moves
         moves_dict = get_valid_moves(current_state)  # Provided by your code
         valid_moves = [
             Move((r, c), v)
@@ -242,22 +208,16 @@ def rollout_simulation(game_state, max_depth=5) -> float:
             for v in values
         ]
         if not valid_moves:
-            break  # No more moves => rollout ends
+            break
         mv = random.choice(valid_moves)
         current_state = simulate_move(current_state, mv)
         depth += 1
 
-    # Simple evaluation: difference in scores
     ai_player_index = game_state.current_player - 1
     return (
         current_state.scores[ai_player_index]
         - current_state.scores[1 - ai_player_index]
     )
-
-
-###############################################################################
-#                    MCTS NODE & TRANSPOSITION TABLE
-###############################################################################
 
 
 class MCTSNode:
@@ -287,17 +247,11 @@ def state_key(game_state) -> Tuple:
     Create a unique key for the transposition table (if desired).
     For instance, (tuple of squares, current_player, tuple of scores).
     """
-    # This only works if game_state.board.squares is a list of ints that can be converted to a tuple.
     return (
         tuple(game_state.board.squares),
         game_state.current_player,
         tuple(game_state.scores),
     )
-
-
-###############################################################################
-#                           MCTS TREE
-###############################################################################
 
 
 class MonteCarloTree:
@@ -310,7 +264,6 @@ class MonteCarloTree:
     def _get_or_create_node(
         self, game_state, move: Optional[Move]
     ) -> MCTSNode:
-        # Optional usage of a transposition table
         key = state_key(game_state)
         if key in self.transposition_table:
             return self.transposition_table[key]
@@ -342,14 +295,12 @@ class MonteCarloTree:
             for (r, c), vals in moves_dict.items()
             for v in vals
         ]
-        # Already expanded
         expanded_moves = {
             (child.move.square, child.move.value)
             for child in node.children
             if child.move
         }
 
-        # Filter unexpanded
         unexpanded = [
             mv
             for mv in valid_moves
@@ -368,7 +319,6 @@ class MonteCarloTree:
                 child_node.parent = node
                 node.children.append(child_node)
 
-        # Return one newly created child as the node to simulate from
         return random.choice(node.children) if node.children else node
 
     def simulate(self, node: MCTSNode) -> float:
@@ -389,18 +339,13 @@ class MonteCarloTree:
             current = current.parent
 
     def do_iteration(self):
-        # Selection
         leaf = self.visit()
 
-        # If leaf is unvisited, we skip expansion to let the rollout happen from here
         if leaf.visit_count > 0:
-            # Expand
             leaf = self.expand(leaf, max_children=5)
 
-        # Simulation
         reward = self.simulate(leaf)
 
-        # Backpropagation
         self.backpropagate(leaf, reward)
 
     def best_move(self) -> Optional[Move]:

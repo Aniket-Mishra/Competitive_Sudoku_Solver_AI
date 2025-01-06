@@ -123,13 +123,11 @@ def amount_of_regions_completed(game_state: GameState, move: Move):
     ):
         completed += 1
 
-    # Check column
     if all(
         game_state.board.get((r, col)) != SudokuBoard.empty for r in range(N)
     ):
         completed += 1
 
-    # Check block
     region_width = game_state.board.region_width()
     region_height = game_state.board.region_height()
     start_row = (row // region_height) * region_height
@@ -163,7 +161,6 @@ def simulate_move(game_state: GameState, move: Move):
         completed_regions
     ]
 
-    # Switch the current player
     new_state.current_player = 3 - new_state.current_player
 
     return new_state
