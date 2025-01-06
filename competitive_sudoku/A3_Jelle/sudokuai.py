@@ -76,8 +76,6 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                     best_move = move
                 if best_move:
                     self.propose_move(best_move)
-                    #new_state = simulate_move(game_state, best_move)
-                    #new_illegal_moves = get_illegal_moves(new_state, game_state) | loaded_illegal_moves
                     self.save((loaded_illegal_moves, game_state))
                 
             sorted_moves = [i[0]for i in sorted(depth_move_scores, key=lambda x: x[1], reverse=True)]
