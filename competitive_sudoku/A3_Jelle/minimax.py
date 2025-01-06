@@ -1,5 +1,5 @@
-from competitive_sudoku.sudoku import GameState, Move
-from A3_Jelle.helper_functions import simulate_move, get_valid_moves
+from competitive_sudoku.sudoku import GameState, Move, SudokuBoard
+from A3_Jelle.helper_functions import simulate_move, get_valid_moves, get_illegal_moves
 from A3_Jelle.taboo_helpers import naked_singles
 from A3_Jelle.evaluation_functions import (
     score_center_moves,
@@ -15,27 +15,36 @@ def minimax(
     beta: int,
     maximizing: bool,
     ai_player_index: int,
-):
+    illegal_moves: set
+) -> float:
     """
-    Minimax implementation with depth-limited search.
+    Minimax implementation with depth-limited search and localized illegal moves handling.
     """
-    valid_moves_dict = get_valid_moves(game_state)
-    # valid_moves = naked_singles(game_state, valid_moves_dict)
+    N = game_state.board.N
 
+    # Generate valid moves for the current player
     valid_moves = [
-        Move((row, col), value)
-        for (row, col), values in valid_moves_dict.items()
-        for value in values
+        Move(square, value)
+        for square in game_state.player_squares()
+        for value in range(1, N + 1)
+        if (square, value) not in illegal_moves and game_state.board.get(square) == SudokuBoard.empty
     ]
 
+    # Base case: terminal state or depth limit reached
     if depth == 0 or is_terminal(game_state):
         return evaluate(game_state, ai_player_index)
 
     if maximizing:
         max_eval = float("-inf")
         for move in valid_moves:
-
+            # Simulate the move
             next_state = simulate_move(game_state, move)
+
+            # Create a local copy of illegal moves for this branch
+            local_illegal_moves = illegal_moves | get_illegal_moves(
+                next_state, game_state)
+
+            # Recursive call to minimax
             eval = minimax(
                 next_state,
                 depth - 1,
@@ -43,16 +52,25 @@ def minimax(
                 beta,
                 maximizing=False,
                 ai_player_index=ai_player_index,
+                illegal_moves=local_illegal_moves
             )
             max_eval = max(max_eval, eval)
             alpha = max(alpha, eval)
             if beta <= alpha:
-                break
+                break  # Beta cutoff
         return max_eval
+
     else:
         min_eval = float("inf")
         for move in valid_moves:
+            # Simulate the move
             next_state = simulate_move(game_state, move)
+
+            # Create a local copy of illegal moves for this branch
+            local_illegal_moves = illegal_moves | get_illegal_moves(
+                next_state, game_state)
+
+            # Recursive call to minimax
             eval = minimax(
                 next_state,
                 depth - 1,
@@ -60,12 +78,14 @@ def minimax(
                 beta,
                 maximizing=True,
                 ai_player_index=ai_player_index,
+                illegal_moves=local_illegal_moves
             )
             min_eval = min(min_eval, eval)
             beta = min(beta, eval)
             if beta <= alpha:
-                break
+                break  # Alpha cutoff
         return min_eval
+
 
 
 def is_terminal(game_state: GameState):

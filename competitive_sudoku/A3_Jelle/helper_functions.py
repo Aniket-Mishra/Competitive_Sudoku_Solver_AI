@@ -3,6 +3,89 @@ import copy
 from typing import Tuple
 
 
+
+def get_illegal_moves(new_state: GameState, old_state: GameState):
+    old_squares = old_state.occupied_squares1 + old_state.occupied_squares2
+    new_squares = new_state.occupied_squares1 + new_state.occupied_squares2
+    board = new_state.board
+    remaining_squares = list(set(new_squares) - set(old_squares))
+    N = new_state.board.N
+
+    illegal_moves = set()
+    for square in remaining_squares:
+        value = board.get(square)
+        if value != SudokuBoard.empty:
+            row, col = square
+
+            
+            # Add all squares in the same row
+            for c in range(N):
+                illegal_moves.add(((row, c), value))
+
+            # Add all squares in the same column
+            for r in range(N):
+                illegal_moves.add(((r, col), value))
+
+            # Add all squares in the same region
+            region_start_row = (row // board.region_height()) * board.region_height()
+            region_start_col = (col // board.region_width()) * board.region_width()
+            for r in range(region_start_row, region_start_row + board.region_height()):
+                for c in range(region_start_col, region_start_col + board.region_width()):
+                    illegal_moves.add(((r, c), value))
+
+    return illegal_moves
+
+
+# def get_illegal_moves(game_state: GameState, old_state) -> set:
+#     """
+#     Recalculates illegal moves only for the squares in player_squares() based on all filled squares.
+
+#     Args:
+#         game_state: Current GameState object.
+
+#     Returns:
+#         A set of illegal moves (square, value) for the active player's squares.
+#     """
+#     board = game_state.board
+#     N = board.N
+#     illegal_moves = set()
+
+#     # Get the active player's squares
+#     player_squares = game_state.player_squares()
+
+#     # Loop through all filled squares
+#     all_filled_squares = game_state.occupied_squares1 + game_state.occupied_squares2
+#     for filled_square in all_filled_squares:
+#         filled_value = board.get(filled_square)
+#         if filled_value != SudokuBoard.empty:
+#             filled_row, filled_col = filled_square
+
+#             # Check the impact of this filled square on the active player's squares
+#             for square in player_squares:
+#                 row, col = square
+
+#                 # Same row
+#                 if row == filled_row:
+#                     illegal_moves.add((square, filled_value))
+
+#                 # Same column
+#                 if col == filled_col:
+#                     illegal_moves.add((square, filled_value))
+
+#                 # Same region
+#                 region_start_row = (
+#                     filled_row // board.region_height()) * board.region_height()
+#                 region_start_col = (
+#                     filled_col // board.region_width()) * board.region_width()
+#                 if (region_start_row <= row < region_start_row + board.region_height() and
+#                         region_start_col <= col < region_start_col + board.region_width()):
+#                     illegal_moves.add((square, filled_value))
+
+#     return illegal_moves
+
+
+
+
 def get_region_values(board: SudokuBoard, square: Tuple[int, int]):
     """
     Gets the values in the region corresponding to the given square.
