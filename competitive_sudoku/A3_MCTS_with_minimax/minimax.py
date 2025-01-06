@@ -1,7 +1,10 @@
 from competitive_sudoku.sudoku import GameState, Move
-from A3_MCTS.helper_functions import simulate_move, get_valid_moves
-from A3_MCTS.taboo_helpers import naked_singles
-from A3_MCTS.evaluation_functions import (
+from A3_MCTS_with_minimax.helper_functions import (
+    simulate_move,
+    get_valid_moves,
+)
+from A3_MCTS_with_minimax.taboo_helpers import naked_singles
+from A3_MCTS_with_minimax.evaluation_functions import (
     score_center_moves,
     score_difference,
     score_not_reachable_by_opponent,

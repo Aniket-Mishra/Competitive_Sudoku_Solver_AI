@@ -4,15 +4,15 @@ import copy
 import time
 from competitive_sudoku.sudoku import GameState, Move, SudokuBoard
 
-from A3_MCTS.helper_functions import (
+from A3_MCTS_with_minimax.helper_functions import (
     get_valid_moves,
     simulate_move,
 )
-from A3_MCTS.minimax import (
+from A3_MCTS_with_minimax.minimax import (
     minimax,
 )
 
-from A3_MCTS.taboo_helpers import naked_singles, hidden_singles
+from A3_MCTS_with_minimax.taboo_helpers import naked_singles, hidden_singles
 
 
 def score_mobility(game_state: GameState, ai_player_index: int) -> float:

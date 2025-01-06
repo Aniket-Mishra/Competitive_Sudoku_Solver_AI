@@ -79,7 +79,9 @@ def warmup_players(
 
         while move_number < number_of_moves:
             player, player_number = (
-                (player1, 1) if len(game_state.moves) % 2 == 0 else (player2, 2)
+                (player1, 1)
+                if len(game_state.moves) % 2 == 0
+                else (player2, 2)
             )
             player.best_move[0] = 0
             player.best_move[1] = 0
@@ -200,9 +202,7 @@ def simulate_game(
                             else (1, 0, game_state)
                         )
                     board_text = str(game_state.board)
-                    options = (
-                        f'--move "{game_state.board.square2index(square)} {value}"'
-                    )
+                    options = f'--move "{game_state.board.square2index(square)} {value}"'
                     if player_squares is not None:
                         allowed = " ".join(
                             str(game_state.board.square2index(square))
@@ -230,7 +230,9 @@ def simulate_game(
                             else (1, 0, game_state)
                         )
                     if "has no solution" in output:
-                        log(f"The sudoku has no solution after the move {best_move}.")
+                        log(
+                            f"The sudoku has no solution after the move {best_move}."
+                        )
                         player_score = 0
                         game_state.moves.append(TabooMove(square, value))
                         game_state.taboo_moves.append(TabooMove(square, value))
@@ -252,7 +254,9 @@ def simulate_game(
                         f"No move was supplied. Player {3-player_number} wins the game."
                     )
                     return (
-                        (0, 1, game_state) if player_number == 1 else (1, 0, game_state)
+                        (0, 1, game_state)
+                        if player_number == 1
+                        else (1, 0, game_state)
                     )
             game_state.scores[player_number - 1] = (
                 game_state.scores[player_number - 1] + player_score
@@ -303,7 +307,9 @@ def play_game(
         game_state = GameState()
     else:
         initial_board = SudokuBoard(2, 2)
-        allowed_squares1, allowed_squares2 = allowed_squares(initial_board, playmode)
+        allowed_squares1, allowed_squares2 = allowed_squares(
+            initial_board, playmode
+        )
         game_state = GameState(
             allowed_squares1=allowed_squares1,
             occupied_squares1=[],
@@ -362,10 +368,15 @@ def main():
         default=0.5,
     )
     cmdline_parser.add_argument(
-        "--check", help="check if the solve_sudoku program works", action="store_true"
+        "--check",
+        help="check if the solve_sudoku program works",
+        action="store_true",
     )
     cmdline_parser.add_argument(
-        "--board", metavar="FILE", type=str, help="a text file containing a game state"
+        "--board",
+        metavar="FILE",
+        type=str,
+        help="a text file containing a game state",
     )
     cmdline_parser.add_argument(
         "--quiet", help="print minimal output", action="store_true"
@@ -382,7 +393,9 @@ def main():
         default="rows",
         help="Choose the playing mode (classic, rows, border, random). Defaults to rows.",
     )
-    cmdline_parser.add_argument("--ascii", help=argparse.SUPPRESS, action="store_true")
+    cmdline_parser.add_argument(
+        "--ascii", help=argparse.SUPPRESS, action="store_true"
+    )
     args = cmdline_parser.parse_args()
 
     SudokuSettings.print_ascii_states = args.ascii
@@ -404,7 +417,7 @@ def main():
         p1, p2, game_state = game_output
 
         # Define the CSV file name
-        file_name = "results.csv"
+        file_name = "resultsA3.csv"
         columns = [
             "time",
             "board",
@@ -418,12 +431,10 @@ def main():
             "winner",
         ]
 
-        # Ensure results.csv exists
         if not os.path.exists(file_name):
             df = pd.DataFrame(columns=columns)
             df.to_csv(file_name, index=False)
 
-        # Calculate results
         p1_score = game_state.scores[0]
         p2_score = game_state.scores[1]
         p1_occupied = len(game_state.occupied_squares1)
@@ -431,7 +442,6 @@ def main():
         total_moves = len(game_state.moves)
         winner = args.first if p1 > p2 else args.second if p2 > p1 else "Draw"
 
-        # Append results to CSV
         new_row = {
             "time": args.time,
             "board": args.board,

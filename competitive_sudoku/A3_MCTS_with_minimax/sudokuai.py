@@ -7,11 +7,11 @@ from competitive_sudoku.sudoku import (
     SudokuBoard,
 )
 import competitive_sudoku.sudokuai
-from A3_MCTS.helper_functions import get_valid_moves
-from A3_MCTS.taboo_helpers import naked_singles, hidden_singles
+from A3_MCTS_with_minimax.helper_functions import get_valid_moves
+from A3_MCTS_with_minimax.taboo_helpers import naked_singles, hidden_singles
 
 import time
-from A3_MCTS.MCTS import MonteCarloTree
+from A3_MCTS_with_minimax.MCTS import MonteCarloTree
 
 
 class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
