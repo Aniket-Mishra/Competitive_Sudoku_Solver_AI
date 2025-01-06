@@ -461,44 +461,6 @@ def main():
         return game_output
 
 
-# if __name__ == "__main__":
-#     p1, p2, game_state = main()
-#     print(p1)
-#     print(p2)
-#     print(game_state)
-#     import pandas as pd
-#     import os
-
-#     # Define the file name
-#     file_name = "results.csv"
-#     columns = [
-#         "time",
-#         "board",
-#         "player1",
-#         "player2",
-#         "player1_score",
-#         "player2_score",
-#         "no_of_p1_occupied_squares",
-#         "no_of_p2_occupied_squares",
-#         "total_moves",
-#         "winner",
-#     ]
-
-#     # Check if the file already exists
-#     if not os.path.exists(file_name):
-#         # Create an empty DataFrame with the specified columns
-#         df = pd.DataFrame(columns=columns)
-#         # Save the DataFrame to a CSV file
-#         df.to_csv(file_name, index=False)
-#         print(f"CSV file '{file_name}' created successfully.")
-#     df = pd.read_csv("results.csv")
-#     p1_score = game_state.scores[0]
-#     p2_score = game_state.scores[1]
-#     p1_occu_len = len(game_state.occupied_squares1)
-#     p2_occu_len = len(game_state.occupied_squares2)
-#     num_moves = len(game_state.moves)
-
-
 if __name__ == "__main__":
     import pandas as pd
     import os

@@ -17,7 +17,7 @@ def score_trap_opponent(game_state: GameState, ai_player_index: int) -> float:
     opponent_index = 1 - ai_player_index
     game_state.current_player = opponent_index + 1
     opp_moves = get_valid_moves(game_state)
-    moves_dict = naked_singles(game_state, moves_dict)
+    opp_moves = naked_singles(game_state, opp_moves)
 
     game_state.current_player = original_player
 
