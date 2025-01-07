@@ -46,11 +46,26 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
 
         self.propose_move(random.choice(valid_moves))
 
+        value_groups = {}
+        for move in valid_moves:
+            square, value = move.square, move.value
+            if value not in value_groups:
+                value_groups[value] = []
+            value_groups[value].append(move)
+
+        # Interleave the groups
+        sorted_moves = []
+        for value in sorted(value_groups.keys()):  # Sort by value
+            sorted_moves.extend(value_groups[value])
+
+        # print([(move.square, move.value) for move in valid_moves])
+        # print([(move.square, move.value) for move in sorted_moves])
+
         for depth in range(1, depth + 1):
             best_move = None
             best_score = float("-inf")
             depth_move_scores = []
-            for move in valid_moves:
+            for move in sorted_moves:
                 next_state = simulate_move(game_state, move, ai_player_index)
                 score = minimax(
                     next_state,
@@ -68,7 +83,7 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                 if best_move:
                     self.propose_move(best_move)
 
-            valid_moves = [
+            sorted_moves = [
                 i[0]
                 for i in sorted(depth_move_scores, key=lambda x: x[1], reverse=True)
             ]
