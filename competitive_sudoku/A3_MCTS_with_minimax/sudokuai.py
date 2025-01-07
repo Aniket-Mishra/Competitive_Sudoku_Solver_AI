@@ -44,7 +44,6 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
             return  # No valid moves, do nothing
         self.propose_move(random.choice(initial_moves))
 
-        iteration = 0
         while True:
             best_leaf_node = mcts.visit()
 
@@ -56,11 +55,9 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
 
             mcts.backpropagate(selected_node, result)
 
-            if iteration % 5 == 0:
-                best_move = self.get_best_move_from_tree(mcts, initial_moves)
-                self.propose_move(best_move)
+            best_move = self.get_best_move_from_tree(mcts, initial_moves)
+            self.propose_move(best_move)
 
-            iteration += 1
 
     def get_best_move_from_tree(
         self, tree: MonteCarloTree, fallback_moves: list[Move]
