@@ -32,8 +32,7 @@ def score_center_moves(game_state: GameState, ai_player_index) -> float:
 
     center = (game_state.board.N - 1) / 2
 
-    ai_squares = (
-        game_state.occupied_squares1
+    ai_squares = (game_state.occupied_squares1
         if ai_player_index == 0
         else game_state.occupied_squares2
     )
@@ -44,32 +43,28 @@ def score_center_moves(game_state: GameState, ai_player_index) -> float:
         row_prox += abs(row - center)
         col_prox += abs(col - center)
 
-    # normalizing row and col prox because it keeps on increasing over time
-    # cuz as we take more of the center
-    # distance values increase
-
-    # Commented out cuz we started losing somehow after this :'(
-    # For A3 I guess.
-
     num_squares = len(ai_squares)
     if num_squares > 0:
         row_prox /= num_squares
         col_prox /= num_squares
 
-    # Neg for top - occupy center and try to trap
-    # Pos for bottom - Occupy and trap from the sides
-    # Jelle wanted the top algo even though both were great so why not.
-
-    # if ai_player_index == 0:
-    #     return -(row_weight * col_weight + col_weight * col_prox)
-    # else:
-    #     return row_weight * col_weight + col_weight * col_prox
     return -(row_weight * col_weight + col_weight * col_prox)
 
 
-def score_not_reachable_by_opponent(
-    game_state: GameState, ai_player_index: int
-) -> float:
+def score_not_reachable_by_opponent(game_state: GameState, ai_player_index: int) -> float:
+    """
+    Computes a score that rewards squares the AI can access and also the opponent can access..
+    
+    The function evaluates how many of the AI's allowed squares are reachable by the opponent.
+    The score penalizes squares that the opponent can not access and rewards those that are accessible to both players.
+    
+    Parameters:
+    - game_state (GameState): The current state of the Sudoku game.
+    - ai_player_index (int): The index of the AI player (0 for player 1, 1 for player 2).
+    
+    Returns:
+    - float: A normalized score, where a higher value indicates that more squares are reachable by both players.
+    """
     original_player = game_state.current_player
 
     if ai_player_index == 0:
@@ -77,13 +72,11 @@ def score_not_reachable_by_opponent(
         ai_allowed_squares = game_state.player_squares()
         game_state.current_player = 2
         opponent_allowed_squares = game_state.player_squares()
-        # print(ai_allowed_squares)
     else:
         game_state.current_player = 2
         ai_allowed_squares = game_state.player_squares()
         game_state.current_player = 1
         opponent_allowed_squares = game_state.player_squares()
-        # print(ai_allowed_squares)
 
     game_state.current_player = original_player
 

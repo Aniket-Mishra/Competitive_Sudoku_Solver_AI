@@ -72,6 +72,24 @@ def get_valid_moves(game_state: GameState) -> Dict:
             )
 
     def possible(i, j, value):
+        """
+        Checks whether a specific move is possible for the current game state.
+
+        The function determines if placing a particular value in a given square 
+        is valid by ensuring that:
+        - The square is empty.
+        - The move is not forbidden (not in taboo moves).
+        - The value does not already exist in the same row, column, or region.
+
+        Parameters:
+        - i (int): The row index of the square.
+        - j (int): The column index of the square.
+        - value (int): The value to be placed in the square.
+
+        Returns:
+        - bool: True if the move is valid, False otherwise.
+        """
+
         region = (i // region_height, j // region_width)
 
         return (
@@ -102,21 +120,18 @@ def amount_of_regions_completed(game_state: GameState, move: Move) -> int:
         move (Move): Move object to check completion
 
     Returns:
-        int: No of regions completed
+        int: Number of regions completed
     """
     completed = 0
     N = game_state.board.N
     row, col = move.square
 
-    # No empty cells in a row = row complete
     if all(game_state.board.get((row, c)) != SudokuBoard.empty for c in range(N)):
         completed += 1
 
-    # No empty cells in a row = row complete
     if all(game_state.board.get((r, col)) != SudokuBoard.empty for r in range(N)):
         completed += 1
 
-    # No empty cells in a row = row complete
     region_width = game_state.board.region_width()
     region_height = game_state.board.region_height()
     start_row = (row // region_height) * region_height
@@ -131,7 +146,7 @@ def amount_of_regions_completed(game_state: GameState, move: Move) -> int:
     return completed
 
 
-def simulate_move(game_state: GameState, move: Move, ai_player_index: int) -> GameState:
+def simulate_move(game_state: GameState, move: Move) -> GameState:
     """
     Simulates a move and updates allowed squares and occupied squares correctly.
 

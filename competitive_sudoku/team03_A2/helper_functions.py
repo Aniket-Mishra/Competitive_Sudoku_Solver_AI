@@ -45,20 +45,10 @@ def get_valid_moves(game_state: GameState) -> Dict:
     region_width = board.region_width()
 
     row_values = [
-        set(
-            board.get((i, col))
-            for col in range(N)
-            if board.get((i, col)) != SudokuBoard.empty
-        )
-        for i in range(N)
+        set(board.get((i, col))for col in range(N)if board.get((i, col)) != SudokuBoard.empty) for i in range(N)
     ]
     col_values = [
-        set(
-            board.get((row, j))
-            for row in range(N)
-            if board.get((row, j)) != SudokuBoard.empty
-        )
-        for j in range(N)
+        set(board.get((row, j))for row in range(N)if board.get((row, j)) != SudokuBoard.empty) for j in range(N)
     ]
     region_values = {}
     for i in range(0, N, region_height):
@@ -108,15 +98,12 @@ def amount_of_regions_completed(game_state: GameState, move: Move) -> int:
     N = game_state.board.N
     row, col = move.square
 
-    # No empty cells in a row = row complete
     if all(game_state.board.get((row, c)) != SudokuBoard.empty for c in range(N)):
         completed += 1
 
-    # No empty cells in a row = row complete
     if all(game_state.board.get((r, col)) != SudokuBoard.empty for r in range(N)):
         completed += 1
 
-    # No empty cells in a row = row complete
     region_width = game_state.board.region_width()
     region_height = game_state.board.region_height()
     start_row = (row // region_height) * region_height
@@ -157,7 +144,6 @@ def simulate_move(game_state: GameState, move: Move, ai_player_index: int) -> Ga
     completed_regions = amount_of_regions_completed(new_state, move)
     new_state.scores[new_state.current_player - 1] += score_dict[completed_regions]
 
-    # Switch the current player
     new_state.current_player = 3 - new_state.current_player
 
     return new_state

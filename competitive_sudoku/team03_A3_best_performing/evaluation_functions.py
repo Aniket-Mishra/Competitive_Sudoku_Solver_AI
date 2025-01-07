@@ -7,10 +7,10 @@ def score_difference(game_state: GameState, ai_player_index: int) -> float:
 
     Args:
         game_state (GameState): Current game state
-        ai_player_index (int): integer denoting our current player index
+        ai_player_index (int): index of our agent
 
     Returns:
-        float: score diff b/w our agent vs enemy
+        float: score diff of our agent vs opponent
     """
     return game_state.scores[ai_player_index] - game_state.scores[1 - ai_player_index]
 
@@ -52,9 +52,20 @@ def score_center_moves(game_state: GameState, ai_player_index) -> float:
     return -(row_weight * col_weight + col_weight * col_prox)
 
 
-def score_not_reachable_by_opponent(
-    game_state: GameState, ai_player_index: int
-) -> float:
+def score_not_reachable_by_opponent(game_state: GameState, ai_player_index: int) -> float:
+    """
+    Computes a score that rewards squares the AI can access and also the opponent can access..
+    
+    The function evaluates how many of the AI's allowed squares are reachable by the opponent.
+    The score penalizes squares that the opponent can not access and rewards those that are accessible to both players.
+    
+    Parameters:
+    - game_state (GameState): The current state of the Sudoku game.
+    - ai_player_index (int): index of our agent.
+    
+    Returns:
+    - float: A normalized score, where a higher value indicates that more squares are reachable by both players.
+    """
     original_player = game_state.current_player
 
     if ai_player_index == 0:
