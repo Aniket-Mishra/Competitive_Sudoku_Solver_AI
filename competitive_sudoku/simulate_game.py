@@ -29,12 +29,12 @@ from competitive_sudoku.sudoku import (
 )
 from competitive_sudoku.sudokuai import SudokuAI
 
-SUDOKU_SOLVER = (
-    "bin\\solve_sudoku.exe"
-    if platform.system() == "Windows"
-    else "bin/solve_sudoku_mac"
-)
-# SUDOKU_SOLVER = 'bin\\Windows\\solve_sudoku.exe' if platform.system() == 'Windows' else 'bin/solve_sudoku'
+# SUDOKU_SOLVER = (
+#     "bin\\solve_sudoku.exe"
+#     if platform.system() == "Windows"
+#     else "bin/solve_sudoku_mac"
+# )
+SUDOKU_SOLVER = r'C:\Users\jelle\solve_sudoku.exe' if platform.system() == 'Windows' else 'bin/solve_sudoku'
 
 GameResult = Tuple[float, float]
 
@@ -324,12 +324,12 @@ def main():
     cmdline_parser.add_argument(
         "--first",
         help="the module name of the first player's SudokuAI class (default: random_player)",
-        default="random_player",
+        default="A3_MCTS_with_minimax",
     )
     cmdline_parser.add_argument(
         "--second",
         help="the module name of the second player's SudokuAI class (default: random_player)",
-        default="random_player",
+        default="team03_A2",
     )
     cmdline_parser.add_argument(
         "--time",

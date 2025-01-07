@@ -171,6 +171,35 @@ def ucb_score(node: "MCTSNode", col=1.4) -> float:
     explore = col * math.sqrt(math.log(n_parent) / node.visit_count)
     return exploit + explore
 
+def uct_score(node: "MCTSNode", exploration_constant=1.4) -> float:
+    """
+    Computes the UCT (Upper Confidence Bound for Trees) score for a node.
+    
+    Args:
+        node (MCTSNode): The current node.
+        exploration_constant (float): The exploration weight (default is 1.4).
+    
+    Returns:
+        float: The UCT score.
+    """
+    if (
+        node.visit_count == 0
+        or node.parent is None
+        or node.parent.visit_count == 0
+    ):
+        return float("inf")  # Encourage exploration for unvisited nodes.
+
+    # Exploitation term
+    exploitation_value = node.value_sum / node.visit_count
+
+    # Exploration term
+    parent_visits = node.parent.visit_count
+    exploration_value = exploration_constant * math.sqrt(math.log(parent_visits) / node.visit_count)
+
+    # Combine exploitation and exploration
+    return exploitation_value + exploration_value
+
+
 
 def state_key(game_state: GameState) -> tuple:
     """
@@ -254,7 +283,7 @@ class MonteCarloTree:
         while current is not None:
             current.visit_count += 1
             current.value_sum += result
-            current.UCT_Score = ucb_score(current)
+            current.UCT_Score = uct_score(current)
             current = current.parent
 
     def do_iteration(self):
