@@ -1,16 +1,11 @@
 import random
-import copy
 from competitive_sudoku.sudoku import (
     GameState,
     Move,
-    TabooMove,
-    SudokuBoard,
 )
 import competitive_sudoku.sudokuai
 from A3_MCTS_with_minimax.helper_functions import get_valid_moves
-from A3_MCTS_with_minimax.taboo_helpers import naked_singles, hidden_singles
-
-import time
+from A3_MCTS_with_minimax.taboo_helpers import naked_singles
 from A3_MCTS_with_minimax.MCTS import MonteCarloTree
 
 
@@ -41,7 +36,8 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
             for value in values
         ]
         if not initial_moves:
-            return  # No valid moves, do nothing
+            return
+
         self.propose_move(random.choice(initial_moves))
 
         while True:
@@ -58,13 +54,17 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
             best_move = self.get_best_move_from_tree(mcts, initial_moves)
             self.propose_move(best_move)
 
+    def get_best_move_from_tree(self, tree: MonteCarloTree, fallback_moves: list[Move]) -> Move:
+        """
+        Identifies the best move based on visit counts of child nodes.
 
-    def get_best_move_from_tree(
-        self, tree: MonteCarloTree, fallback_moves: list[Move]
-    ) -> Move:
+        This function determines the move leading to the most explored node, indicating 
+        the most promising move.
+
+        Returns:
+        - Move | None: The best move or None if no moves are available.
         """
-        Returns the best move from the MCTS tree based on visit count.
-        """
+
         best_child = None
         max_visits = -1
 
@@ -74,6 +74,3 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                 best_child = child
 
         return best_child.move if best_child else random.choice(fallback_moves)
-
-
-# python .\simulate_game.py --first=A3_MCTS --second=greedy_player --board=boards/empty-3x3.txt

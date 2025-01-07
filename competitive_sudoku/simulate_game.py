@@ -324,12 +324,12 @@ def main():
     cmdline_parser.add_argument(
         "--first",
         help="the module name of the first player's SudokuAI class (default: random_player)",
-        default="A3_MCTS_with_minimax",
+        default="greedy_player",
     )
     cmdline_parser.add_argument(
         "--second",
         help="the module name of the second player's SudokuAI class (default: random_player)",
-        default="team03_A2",
+        default="A3_MCTS_with_minimax",
     )
     cmdline_parser.add_argument(
         "--time",
