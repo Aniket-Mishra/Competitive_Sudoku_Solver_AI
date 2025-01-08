@@ -13,9 +13,9 @@ def get_region_values(board: SudokuBoard, square: Tuple[int, int]):
     start_col = (square[1] // region_width) * region_width
 
     region_values = [
-        board.get((r, c))
-        for r in range(start_row, start_row + region_height)
-        for c in range(start_col, start_col + region_width)
+        board.get((row, col))
+        for row in range(start_row, start_row + region_height)
+        for col in range(start_col, start_col + region_width)
     ]
     return region_values
 
@@ -48,10 +48,10 @@ def get_valid_moves(game_state):
         for j in range(0, N, region_width):
             region = (i // region_height, j // region_width)
             region_values[region] = set(
-                board.get((r, c))
-                for r in range(i, i + region_height)
-                for c in range(j, j + region_width)
-                if board.get((r, c)) != SudokuBoard.empty
+                board.get((row, col))
+                for row in range(i, i + region_height)
+                for col in range(j, j + region_width)
+                if board.get((row, col)) != SudokuBoard.empty
             )
 
     def possible(i, j, value):
@@ -85,12 +85,14 @@ def amount_of_regions_completed(game_state: GameState, move: Move):
     row, col = move.square
 
     if all(
-        game_state.board.get((row, c)) != SudokuBoard.empty for c in range(N)
+        game_state.board.get((row, col)) != SudokuBoard.empty
+        for col in range(N)
     ):
         completed += 1
 
     if all(
-        game_state.board.get((r, col)) != SudokuBoard.empty for r in range(N)
+        game_state.board.get((row, col)) != SudokuBoard.empty
+        for row in range(N)
     ):
         completed += 1
 
@@ -99,9 +101,9 @@ def amount_of_regions_completed(game_state: GameState, move: Move):
     start_row = (row // region_height) * region_height
     start_col = (col // region_width) * region_width
     if all(
-        game_state.board.get((r, c)) != SudokuBoard.empty
-        for r in range(start_row, start_row + region_height)
-        for c in range(start_col, start_col + region_width)
+        game_state.board.get((row, col)) != SudokuBoard.empty
+        for row in range(start_row, start_row + region_height)
+        for col in range(start_col, start_col + region_width)
     ):
         completed += 1
 

@@ -149,21 +149,21 @@ def weighted_random_move(
         return None
 
     scores = []
-    for m in moves_list:
-        next_st = simulate_move(game_state, m)
-        val = rollout_evaluation(next_st, ai_player_index, max_depth=5)
+    for move in moves_list:
+        next_state = simulate_move(game_state, move)
+        val = rollout_evaluation(next_state, ai_player_index, max_depth=5)
         scores.append(val)
 
-    exps = [math.exp(s / temperature) for s in scores]
+    exps = [math.exp(score / temperature) for score in scores]
     total = sum(exps)
     if total <= 1e-9:
         return random.choice(moves_list)
 
-    rnd = random.random() * total
+    random_var = random.random() * total
     cumulative = 0.0
-    for move, w in zip(moves_list, exps):
-        cumulative += w
-        if rnd < cumulative:
+    for move, exp in zip(moves_list, exps):
+        cumulative += exp
+        if random_var < cumulative:
             return move
 
     return moves_list[-1]
@@ -181,12 +181,16 @@ def score_self_mobility(game_state: GameState, ai_player_index: int) -> float:
         float: A score proportional to the logarithm of the number of valid moves.
     """
     original_player = game_state.current_player
-    game_state.current_player = ai_player_index + 1  # 1-based
+    game_state.current_player = ai_player_index + 1
     my_moves = get_valid_moves(game_state)
     game_state.current_player = original_player
 
     total_moves = sum(len(vals) for vals in my_moves.values())
-    return 10.0 * math.log1p(total_moves)  # or some function
+    return 10.0 * math.log1p(
+        total_moves
+    )  # score with 10 * log value for scaling
+    # This because without log it increased a lot
+    # and forced agent to just play moves to increase accessable squares
 
 
 def mcmc_search(
@@ -195,7 +199,6 @@ def mcmc_search(
     iterations: int = 500,
     temperature: float = 2.0,
     time_limit: float = 1.0,
-    rollout_depth: int = 10,
 ) -> tuple:
     """
     Performs a Markov Chain Monte Carlo (MCMC) search with a simulated annealing strategy.
@@ -206,15 +209,18 @@ def mcmc_search(
         iterations (int): The maximum number of MCMC iterations (default: 500).
         temperature (float): The initial temperature for simulated annealing (default: 2.0).
         time_limit (float): The maximum allowed time for the search in seconds (default: 1.0).
-        rollout_depth (int): The maximum depth for rollouts during evaluations (default: 10).
 
     Returns:
         tuple: The best move found during the search, or None if no moves are found.
     """
     start_time = time.time()
 
-    def state_id(gs: GameState):
-        return (tuple(gs.board.squares), gs.current_player, tuple(gs.scores))
+    def state_id(game_state: GameState):
+        return (
+            tuple(game_state.board.squares),
+            game_state.current_player,
+            tuple(game_state.scores),
+        )
 
     current_state = copy.deepcopy(root_state)
     current_score = score_state(current_state, ai_player_index)
@@ -226,17 +232,20 @@ def mcmc_search(
     root_key = state_id(root_state)
     first_move_map[root_key] = None
 
-    def ensure_map_entry(gs: GameState):
-        sid = state_id(gs)
+    def ensure_map_entry(game_state: GameState):
+        sid = state_id(game_state)
         if sid not in first_move_map:
             first_move_map[sid] = None
 
     ensure_map_entry(current_state)
 
-    for step in range(iterations):
+    for _ in range(iterations):
         if time.time() - start_time > time_limit:
             break
         # More greedy as we play more moves
+        # as temp reduces, it takes lower
+        # probability moves
+        # Check slide 4 in references.
         temperature *= 0.99
         if temperature < 0.2:
             temperature = 0.2
@@ -263,7 +272,9 @@ def mcmc_search(
                 break
 
         if move_chosen is None:
-            print("[DEBUG] No move chosen, ending MCMC iteration.")
+            # since we always have moves unless we are trapped
+            # this doesn't run much
+            # Can use this to check if we are being trapped - Future
             break
 
         next_state = simulate_move(current_state, move_chosen)
