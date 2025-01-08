@@ -130,9 +130,9 @@ def rollout_simulation(game_state: GameState, ai_player_index: int, depth: int =
     moves_dict = get_valid_moves(game_state)
     moves_dict = naked_singles(game_state, moves_dict)
     valid_moves = [
-        Move((row, col), v)
+        Move((row, col), val)
         for (row, col), vals in moves_dict.items()
-        for v in vals
+        for val in vals
     ]
 
     depth_threshold = 2

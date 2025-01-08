@@ -10,8 +10,15 @@ from A3_MCMC.taboo_helpers import naked_singles
 
 def score_trap_opponent(game_state: GameState, ai_player_index: int) -> float:
     """
-    Returns a high positive value if the opponent has very few or zero valid moves.
-    Returns a smaller value if the opponent has many moves.
+    Evaluates the advantage of limiting the opponent's valid moves.
+
+    Args:
+        game_state (GameState): The current game state.
+        ai_player_index (int): The index of the AI player (0 or 1).
+
+    Returns:
+        float: A high score (e.g., 100.0) if the opponent has no valid moves,
+               or a lower score inversely proportional to the number of valid moves.
     """
     original_player = game_state.current_player
     opponent_index = 1 - ai_player_index
@@ -31,21 +38,34 @@ def score_trap_opponent(game_state: GameState, ai_player_index: int) -> float:
 def score_region_completion(
     game_state: GameState, ai_player_index: int
 ) -> float:
+    """
+    Computes the score difference between the AI player and the opponent.
+
+    Args:
+        game_state (GameState): The current game state.
+        ai_player_index (int): The index of the AI player (0 or 1).
+
+    Returns:
+        float: The difference between the AI's score and the opponent's score.
+    """
     return (
         game_state.scores[ai_player_index]
         - game_state.scores[1 - ai_player_index]
     )
 
 
-# def score_state(game_state: GameState, ai_player_index: int) -> float:
-#     trap_score = score_trap_opponent(game_state, ai_player_index)
-#     region_score = score_region_completion(game_state, ai_player_index)
-#     w_trap = 0.8
-#     w_region = 0.2
-#     return w_trap * trap_score + w_region * region_score
-
-
 def score_state(game_state: GameState, ai_player_index: int) -> float:
+    """
+    Aggregates various scoring metrics to evaluate the current game state.
+
+    Args:
+        game_state (GameState): The current game state.
+        ai_player_index (int): The index of the AI player (0 or 1).
+
+    Returns:
+        float: A weighted sum of the trap opponent score, region completion score,
+               and self-mobility score.
+    """
     trap_opponent = score_trap_opponent(game_state, ai_player_index)
     region_score = score_region_completion(game_state, ai_player_index)
     my_mobility = score_self_mobility(game_state, ai_player_index)
@@ -63,6 +83,17 @@ def score_state(game_state: GameState, ai_player_index: int) -> float:
 def rollout_evaluation(
     state: GameState, ai_player_index: int, max_depth: int = 10
 ) -> float:
+    """
+    Simulates a sequence of moves from the current state to estimate its value.
+
+    Args:
+        state (GameState): The initial game state for the rollout.
+        ai_player_index (int): The index of the AI player (0 or 1).
+        max_depth (int): The maximum number of moves to simulate (default: 10).
+
+    Returns:
+        float: The evaluated score of the game state after the rollout.
+    """
     game_state = copy.deepcopy(state)
     for _ in range(max_depth):
         moves_dict = get_valid_moves(game_state)
@@ -72,9 +103,9 @@ def rollout_evaluation(
             break
 
         all_moves = []
-        for (r, c), vals in moves_dict.items():
-            for v in vals:
-                mv = Move((r, c), v)
+        for (row, col), vals in moves_dict.items():
+            for val in vals:
+                mv = Move((row, col), val)
                 nxt = simulate_move(game_state, mv)
                 sc = score_state(nxt, ai_player_index)
                 all_moves.append((mv, sc))
@@ -96,16 +127,23 @@ def weighted_random_move(
     game_state: GameState, ai_player_index: int, temperature: float = 1.0
 ):
     """
-    Picks a move from get_valid_moves(game_state) with probabilities
-    ~ exp( rollout_score / temperature ) (softmax).
+    Selects a move using a softmax probability distribution based on rollout evaluations.
+
+    Args:
+        game_state (GameState): The current game state.
+        ai_player_index (int): The index of the AI player (0 or 1).
+        temperature (float): The exploration temperature (default: 1.0).
+
+    Returns:
+        Move: The selected move, or None if no valid moves exist.
     """
     moves_dict = get_valid_moves(game_state)
     moves_dict = naked_singles(game_state, moves_dict)
 
     moves_list = []
-    for (r, c), vals in moves_dict.items():
-        for v in vals:
-            moves_list.append(Move((r, c), v))
+    for (row, col), vals in moves_dict.items():
+        for val in vals:
+            moves_list.append(Move((row, col), val))
 
     if not moves_list:
         return None
@@ -132,6 +170,16 @@ def weighted_random_move(
 
 
 def score_self_mobility(game_state: GameState, ai_player_index: int) -> float:
+    """
+    Evaluates the mobility of the AI player by counting its valid moves.
+
+    Args:
+        game_state (GameState): The current game state.
+        ai_player_index (int): The index of the AI player (0 or 1).
+
+    Returns:
+        float: A score proportional to the logarithm of the number of valid moves.
+    """
     original_player = game_state.current_player
     game_state.current_player = ai_player_index + 1  # 1-based
     my_moves = get_valid_moves(game_state)
@@ -148,10 +196,20 @@ def mcmc_search(
     temperature: float = 2.0,
     time_limit: float = 1.0,
     rollout_depth: int = 10,
-):
+) -> tuple:
     """
-    Markov Chain Monte Carlo random walk with a simulated annealing flavor.
-    Returns the best (first) move from 'root_state' found during the walk.
+    Performs a Markov Chain Monte Carlo (MCMC) search with a simulated annealing strategy.
+
+    Args:
+        root_state (GameState): The initial game state.
+        ai_player_index (int): The index of the AI player (0 or 1).
+        iterations (int): The maximum number of MCMC iterations (default: 500).
+        temperature (float): The initial temperature for simulated annealing (default: 2.0).
+        time_limit (float): The maximum allowed time for the search in seconds (default: 1.0).
+        rollout_depth (int): The maximum depth for rollouts during evaluations (default: 10).
+
+    Returns:
+        tuple: The best move found during the search, or None if no moves are found.
     """
     start_time = time.time()
 
@@ -186,9 +244,9 @@ def mcmc_search(
         moves_dict = get_valid_moves(current_state)
         moves_dict = naked_singles(current_state, moves_dict)
         moves_list = [
-            Move((r, c), v)
-            for (r, c), vals in moves_dict.items()
-            for v in vals
+            Move((row, col), val)
+            for (row, col), vals in moves_dict.items()
+            for val in vals
         ]
 
         if not moves_list:

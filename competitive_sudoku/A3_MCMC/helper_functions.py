@@ -76,39 +76,6 @@ def get_valid_moves(game_state):
     return valid_moves
 
 
-def naked_singles(game_state: GameState, valid_moves):
-    N = game_state.board.N
-
-    for naked_single in valid_moves:
-        if len(valid_moves[naked_single]) == 1:
-            single_row = naked_single[0]
-            single_column = naked_single[1]
-            single_value = valid_moves[naked_single][0]
-
-            for i in range(N):
-                if (
-                    i != single_row
-                    and (i, single_column) in valid_moves
-                    and single_value in valid_moves[(i, single_column)]
-                ):
-                    valid_moves[(i, single_column)].remove(single_value)
-                    game_state.taboo_moves.append(
-                        TabooMove((i, single_column), single_value)
-                    )
-
-            for i in range(N):
-                if (
-                    i != single_column
-                    and (single_row, i) in valid_moves
-                    and single_value in valid_moves[(single_row, i)]
-                ):
-                    valid_moves[(single_row, i)].remove(single_value)
-                    game_state.taboo_moves.append(
-                        TabooMove((single_row, i), single_value)
-                    )
-    return valid_moves
-
-
 def amount_of_regions_completed(game_state: GameState, move: Move):
     """
     Checks how many regions (rows, columns, blocks) are completed by the move.

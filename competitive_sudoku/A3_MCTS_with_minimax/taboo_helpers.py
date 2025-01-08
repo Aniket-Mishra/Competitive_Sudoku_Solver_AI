@@ -1,4 +1,4 @@
-from competitive_sudoku.sudoku import SudokuBoard, TabooMove, GameState, Move
+from competitive_sudoku.sudoku import TabooMove, GameState, Move
 from typing import Dict, List, Tuple
 
 

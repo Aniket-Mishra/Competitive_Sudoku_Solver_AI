@@ -1,14 +1,10 @@
 import random
-import copy
 from competitive_sudoku.sudoku import (
     GameState,
     Move,
-    TabooMove,
-    SudokuBoard,
 )
 import competitive_sudoku.sudokuai
 from A3_MCMC.helper_functions import get_valid_moves, naked_singles
-import time
 
 from A3_MCMC.MCMC import mcmc_search
 

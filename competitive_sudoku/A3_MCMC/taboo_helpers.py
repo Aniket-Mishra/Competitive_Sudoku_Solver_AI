@@ -1,5 +1,5 @@
-from competitive_sudoku.sudoku import SudokuBoard, TabooMove, GameState, Move
-from typing import Dict, List, Tuple
+from competitive_sudoku.sudoku import TabooMove, GameState
+from typing import Dict
 
 
 def naked_singles(game_state: GameState, valid_moves: Dict) -> Dict:
