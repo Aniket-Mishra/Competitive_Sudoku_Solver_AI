@@ -190,27 +190,46 @@ def mcmc_search(
     root_state: GameState,
     ai_player_index: int,
     iterations: int = 500,
-) -> Move | None:
+) -> tuple:
     """
-    Markov Chain Monte Carlo (MCMC) search
+    Performs a Markov Chain Monte Carlo (MCMC) search without using temperature.
+
     Args:
         root_state (GameState): The initial game state.
         ai_player_index (int): The index of the AI player (0 or 1).
         iterations (int): The maximum number of MCMC iterations (default: 500).
 
     Returns:
-        Move | None: The best move found during the search, or None if no moves are found.
+        tuple: The best move found during the search, or None if no moves are found.
     """
+
+    def state_id(game_state: GameState):
+        return (
+            tuple(game_state.board.squares),
+            game_state.current_player,
+            tuple(game_state.scores),
+        )
+
     current_state = copy.deepcopy(root_state)
     current_score = score_state(current_state, ai_player_index)
 
-    best_move = None
+    best_state = current_state
     best_score = current_score
+
+    first_move_map = {}
+    root_key = state_id(root_state)
+    first_move_map[root_key] = None
+
+    def ensure_map_entry(game_state: GameState):
+        sid = state_id(game_state)
+        if sid not in first_move_map:
+            first_move_map[sid] = None
+
+    ensure_map_entry(current_state)
 
     for _ in range(iterations):
         moves_dict = get_valid_moves(current_state)
         moves_dict = naked_singles(current_state, moves_dict)
-
         moves_list = [
             Move((row, col), val)
             for (row, col), vals in moves_dict.items()
@@ -221,25 +240,38 @@ def mcmc_search(
             break
 
         move_chosen = weighted_random_move(
-            current_state, ai_player_index
-        ) or random.choice(moves_list)
+            current_state,
+            ai_player_index,
+        )
 
-        if (
-            move_chosen.square not in moves_dict
-            or move_chosen.value not in moves_dict[move_chosen.square]
-        ):  # It started to propose illegal moves:(
-            continue
+        if move_chosen is None:
+            if moves_list:
+                move_chosen = random.choice(moves_list)
+            else:
+                break
 
         next_state = simulate_move(current_state, move_chosen)
 
         next_score = score_state(next_state, ai_player_index)
 
         if next_score > current_score:
+            old_key = state_id(current_state)
             current_state = next_state
             current_score = next_score
+            new_key = state_id(current_state)
+            ensure_map_entry(current_state)
+
+            if first_move_map[new_key] is None:
+                if old_key == root_key:
+                    first_move_map[new_key] = move_chosen
+                else:
+                    first_move_map[new_key] = first_move_map[old_key]
 
             if next_score > best_score:
                 best_score = next_score
-                best_move = move_chosen
+                best_state = copy.deepcopy(current_state)
+
+    best_key = state_id(best_state)
+    best_move = first_move_map.get(best_key, None)
 
     return best_move
