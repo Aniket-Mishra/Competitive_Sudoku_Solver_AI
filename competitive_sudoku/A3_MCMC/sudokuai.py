@@ -32,9 +32,9 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
         best_move = mcmc_search(
             root_state=game_state,
             ai_player_index=ai_index,
-            iterations=1000,  # can increase if jelle gives candy
-            temperature=2.0,
-            time_limit=1.0,
+            iterations=10,  # can increase if jelle gives candy
+            # temperature=2.0,
+            # time_limit=1.0,
         )
 
         if best_move is not None:

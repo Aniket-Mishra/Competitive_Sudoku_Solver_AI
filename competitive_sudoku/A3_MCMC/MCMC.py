@@ -123,50 +123,42 @@ def rollout_evaluation(
     return score_state(game_state, ai_player_index)
 
 
-def weighted_random_move(
-    game_state: GameState, ai_player_index: int, temperature: float = 1.0
-):
+def weighted_random_move(game_state: GameState, ai_player_index: int):
     """
-    Selects a move using a softmax probability distribution based on rollout evaluations.
+    Selects a random top move using a normalized score-based probability distribution.
 
     Args:
         game_state (GameState): The current game state.
         ai_player_index (int): The index of the AI player (0 or 1).
-        temperature (float): The exploration temperature (default: 1.0).
 
     Returns:
         Move: The selected move, or None if no valid moves exist.
     """
+    k = 2  # > k is more random but performs super bad
     moves_dict = get_valid_moves(game_state)
     moves_dict = naked_singles(game_state, moves_dict)
 
-    moves_list = []
-    for (row, col), vals in moves_dict.items():
-        for val in vals:
-            moves_list.append(Move((row, col), val))
+    moves_list = [
+        Move((row, col), val)
+        for (row, col), vals in moves_dict.items()
+        for val in vals
+    ]
 
     if not moves_list:
         return None
 
-    scores = []
-    for move in moves_list:
-        next_state = simulate_move(game_state, move)
-        val = rollout_evaluation(next_state, ai_player_index, max_depth=5)
-        scores.append(val)
+    scores = [
+        rollout_evaluation(
+            simulate_move(game_state, move), ai_player_index, max_depth=5
+        )
+        for move in moves_list
+    ]
 
-    exps = [math.exp(score / temperature) for score in scores]
-    total = sum(exps)
-    if total <= 1e-9:
-        return random.choice(moves_list)
+    scored_moves = list(zip(scores, moves_list))
+    scored_moves.sort(reverse=True, key=lambda x: x[0])
+    top_k_moves = [move for _, move in scored_moves[:k]]
 
-    random_var = random.random() * total
-    cumulative = 0.0
-    for move, exp in zip(moves_list, exps):
-        cumulative += exp
-        if random_var < cumulative:
-            return move
-
-    return moves_list[-1]
+    return random.choice(top_k_moves)
 
 
 def score_self_mobility(game_state: GameState, ai_player_index: int) -> float:
@@ -183,6 +175,8 @@ def score_self_mobility(game_state: GameState, ai_player_index: int) -> float:
     original_player = game_state.current_player
     game_state.current_player = ai_player_index + 1
     my_moves = get_valid_moves(game_state)
+    my_moves = naked_singles(game_state, my_moves)
+
     game_state.current_player = original_player
 
     total_moves = sum(len(vals) for vals in my_moves.values())
@@ -261,9 +255,7 @@ def mcmc_search(
         if not moves_list:
             break
 
-        move_chosen = weighted_random_move(
-            current_state, ai_player_index, temperature
-        )
+        move_chosen = weighted_random_move(current_state, ai_player_index)
 
         if move_chosen is None:
             if moves_list:
