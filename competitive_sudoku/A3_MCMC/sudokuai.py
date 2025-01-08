@@ -4,8 +4,7 @@ from competitive_sudoku.sudoku import (
     Move,
 )
 import competitive_sudoku.sudokuai
-from A3_MCMC.helper_functions import get_valid_moves, naked_singles
-
+from A3_MCMC.helper_functions import get_valid_moves
 from A3_MCMC.MCMC import mcmc_search
 
 
@@ -36,7 +35,6 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
             iterations=1000,  # can increase if jelle gives candy
             temperature=2.0,
             time_limit=1.0,
-            rollout_depth=10,
         )
 
         if best_move is not None:
