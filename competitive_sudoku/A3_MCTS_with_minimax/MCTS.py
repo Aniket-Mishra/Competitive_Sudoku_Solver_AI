@@ -18,7 +18,7 @@ def score_mobility(game_state: GameState, ai_player_index: int) -> float:
     """
     Computes the mobility score for the current game state.
 
-    This score is based on the number of valid moves the AI can make compared to its opponent. 
+    This score is based on the number of valid moves the AI can make compared to its opponent.
     A higher score indicates a greater number of valid moves for the AI relative to the opponent.
 
     Parameters:
@@ -57,14 +57,19 @@ def score_difference(game_state: GameState, ai_player_index: int) -> float:
     Returns:
         float: score diff of our agent vs opponent
     """
-    return game_state.scores[ai_player_index] - game_state.scores[1 - ai_player_index]
+    return (
+        game_state.scores[ai_player_index]
+        - game_state.scores[1 - ai_player_index]
+    )
 
 
-def evaluate_domain_heuristics(game_state: GameState, ai_player_index: int) -> float:
+def evaluate_domain_heuristics(
+    game_state: GameState, ai_player_index: int
+) -> float:
     """
     Combines multiple heuristics to evaluate the current game state.
 
-    This function aggregates scores for mobility and score difference 
+    This function aggregates scores for mobility and score difference
     to provide a comprehensive evaluation of the game state.
 
     Parameters:
@@ -83,11 +88,13 @@ def evaluate_domain_heuristics(game_state: GameState, ai_player_index: int) -> f
     return w_mobility * mob + w_diff * diff
 
 
-def call_minimax_for_evaluation(game_state: GameState, valid_moves, ai_player_index: int) -> float:
+def call_minimax_for_evaluation(
+    game_state: GameState, valid_moves, ai_player_index: int
+) -> float:
     """
     Calls Minimax to evaluate the game state at deeper depths.
 
-    This function performs a Minimax search to assess the outcome of the current game state 
+    This function performs a Minimax search to assess the outcome of the current game state
     when MCTS reaches its depth threshold.
 
     Parameters:
@@ -104,18 +111,26 @@ def call_minimax_for_evaluation(game_state: GameState, valid_moves, ai_player_in
     best_score = float("-inf")
     for move in valid_moves:
         next_state = simulate_move(game_state, move)
-        score = minimax(next_state, search_depth, alpha=float(
-            "-inf"), beta=float("inf"), maximizing=False, ai_player_index=ai_player_index,)
+        score = minimax(
+            next_state,
+            search_depth,
+            alpha=float("-inf"),
+            beta=float("inf"),
+            maximizing=False,
+            ai_player_index=ai_player_index,
+        )
         if score > best_score:
             best_score = score
     return best_score
 
 
-def rollout_simulation(game_state: GameState, ai_player_index: int, depth: int = 0, max_depth=10) -> float:
+def rollout_simulation(
+    game_state: GameState, ai_player_index: int, depth: int = 0, max_depth=10
+) -> float:
     """
     Simulates a random playout from the current game state.
 
-    This function performs a random simulation or calls Minimax when the depth exceeds the 
+    This function performs a random simulation or calls Minimax when the depth exceeds the
     hybrid threshold, returning an evaluation score.
 
     Parameters:
@@ -137,20 +152,23 @@ def rollout_simulation(game_state: GameState, ai_player_index: int, depth: int =
 
     depth_threshold = 2
     if depth > depth_threshold:
-        mm_val = call_minimax_for_evaluation(game_state, valid_moves, ai_player_index)
+        mm_val = call_minimax_for_evaluation(
+            game_state, valid_moves, ai_player_index
+        )
         heuristic_val = evaluate_domain_heuristics(game_state, ai_player_index)
         return mm_val + 0.1 * heuristic_val
 
     if depth >= max_depth:
         return evaluate_domain_heuristics(game_state, ai_player_index)
 
-
     if not valid_moves:
         return evaluate_domain_heuristics(game_state, ai_player_index)
 
     random_move = random.choice(valid_moves)
     next_state = simulate_move(game_state, random_move)
-    return rollout_simulation(next_state, ai_player_index, depth + 1, max_depth)
+    return rollout_simulation(
+        next_state, ai_player_index, depth + 1, max_depth
+    )
 
 
 class MCTSNode:
@@ -200,8 +218,10 @@ def uct_score(node: "MCTSNode", exploration_constant=1.4) -> float:
     ):
         return float("inf")  # Encourage exploration for unvisited nodes.
 
-    uct = (node.value_sum / node.visit_count) + (exploration_constant *
-                                                 math.sqrt(math.log(node.parent.visit_count) / node.visit_count))
+    uct = (node.value_sum / node.visit_count) + (
+        exploration_constant
+        * math.sqrt(math.log(node.parent.visit_count) / node.visit_count)
+    )
 
     return uct
 
@@ -230,7 +250,7 @@ class MonteCarloTree:
     """
     Initializes the Monte Carlo Tree.
 
-    This class manages the MCTS process, including visiting nodes, expanding the tree, 
+    This class manages the MCTS process, including visiting nodes, expanding the tree,
     and backpropagating results.
 
     Parameters:
@@ -247,7 +267,7 @@ class MonteCarloTree:
         """
         Retrieves or creates a node for a given game state.
 
-        Checks if a node exists for the game state in the transposition table. If not, 
+        Checks if a node exists for the game state in the transposition table. If not,
         creates a new node and stores it.
 
         Parameters:
@@ -271,7 +291,7 @@ class MonteCarloTree:
         """
         Selects the best node to visit based on UCT scores.
 
-        This function performs the selection phase of MCTS, traversing the tree to 
+        This function performs the selection phase of MCTS, traversing the tree to
         find the most promising node.
 
         Returns:
@@ -288,7 +308,7 @@ class MonteCarloTree:
         """
         Expands the tree by generating child nodes for the current node.
 
-        This function creates new nodes for unexpanded moves and adds them as children 
+        This function creates new nodes for unexpanded moves and adds them as children
         to the current node.
 
         Parameters:
@@ -337,7 +357,7 @@ class MonteCarloTree:
         """
         Simulates a random playout from the current node.
 
-        This function uses the rollout simulation to evaluate the game state by playing 
+        This function uses the rollout simulation to evaluate the game state by playing
         random moves until a terminal state or maximum depth is reached.
 
         Parameters:
@@ -354,7 +374,7 @@ class MonteCarloTree:
         """
         Backpropagates the result of a playout through the tree.
 
-        This function updates the visit count and value sum of nodes along the path 
+        This function updates the visit count and value sum of nodes along the path
         from the simulated node back to the root.
 
         Parameters:
@@ -382,8 +402,8 @@ class MonteCarloTree:
     def search(self, iterations=500, time_limit=2.0):
         """
         Executes multiple MCTS iterations within a time or iteration limit.
-
         This function performs the MCTS search to identify the best move.
+        Ideally we should take time limit from the script, but couldn't figure out how
 
         Parameters:
         - iterations (int): The maximum number of iterations (default is 500).
@@ -402,8 +422,8 @@ class MonteCarloTree:
         """
         Identifies the best move based on visit counts of child nodes.
 
-        This function determines the move leading to the most explored node, indicating 
-        the most promising move.
+        This function determines the move leading to the most explored node, for
+        the best move.
 
         Returns:
         - Move | None: The best move or None if no moves are available.
