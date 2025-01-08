@@ -1,7 +1,6 @@
 import math
 import random
 import copy
-import time
 from competitive_sudoku.sudoku import GameState, Move, SudokuBoard
 
 from A3_MCMC.helper_functions import get_valid_moves, simulate_move
@@ -191,61 +190,27 @@ def mcmc_search(
     root_state: GameState,
     ai_player_index: int,
     iterations: int = 500,
-    temperature: float = 2.0,
-    time_limit: float = 1.0,
-) -> tuple:
+) -> Move | None:
     """
-    Performs a Markov Chain Monte Carlo (MCMC) search with a simulated annealing strategy.
-
+    Markov Chain Monte Carlo (MCMC) search
     Args:
         root_state (GameState): The initial game state.
         ai_player_index (int): The index of the AI player (0 or 1).
         iterations (int): The maximum number of MCMC iterations (default: 500).
-        temperature (float): The initial temperature for simulated annealing (default: 2.0).
-        time_limit (float): The maximum allowed time for the search in seconds (default: 1.0).
 
     Returns:
-        tuple: The best move found during the search, or None if no moves are found.
+        Move | None: The best move found during the search, or None if no moves are found.
     """
-    start_time = time.time()
-
-    def state_id(game_state: GameState):
-        return (
-            tuple(game_state.board.squares),
-            game_state.current_player,
-            tuple(game_state.scores),
-        )
-
     current_state = copy.deepcopy(root_state)
     current_score = score_state(current_state, ai_player_index)
 
-    best_state = current_state
+    best_move = None
     best_score = current_score
 
-    first_move_map = {}
-    root_key = state_id(root_state)
-    first_move_map[root_key] = None
-
-    def ensure_map_entry(game_state: GameState):
-        sid = state_id(game_state)
-        if sid not in first_move_map:
-            first_move_map[sid] = None
-
-    ensure_map_entry(current_state)
-
     for _ in range(iterations):
-        if time.time() - start_time > time_limit:
-            break
-        # More greedy as we play more moves
-        # as temp reduces, it takes lower
-        # probability moves
-        # Check slide 4 in references.
-        temperature *= 0.99
-        if temperature < 0.2:
-            temperature = 0.2
-
         moves_dict = get_valid_moves(current_state)
         moves_dict = naked_singles(current_state, moves_dict)
+
         moves_list = [
             Move((row, col), val)
             for (row, col), vals in moves_dict.items()
@@ -255,50 +220,26 @@ def mcmc_search(
         if not moves_list:
             break
 
-        move_chosen = weighted_random_move(current_state, ai_player_index)
+        move_chosen = weighted_random_move(
+            current_state, ai_player_index
+        ) or random.choice(moves_list)
 
-        if move_chosen is None:
-            if moves_list:
-                move_chosen = random.choice(moves_list)
-            else:
-                break
-
-        if move_chosen is None:
-            # since we always have moves unless we are trapped
-            # this doesn't run much
-            # Can use this to check if we are being trapped - Future
-            break
+        if (
+            move_chosen.square not in moves_dict
+            or move_chosen.value not in moves_dict[move_chosen.square]
+        ):  # It started to propose illegal moves:(
+            continue
 
         next_state = simulate_move(current_state, move_chosen)
 
         next_score = score_state(next_state, ai_player_index)
 
-        old_score = score_state(current_state, ai_player_index)
-        delta = next_score - old_score
-        if delta > 0:
-            accept_prob = 1.0
-        else:
-            accept_prob = math.exp(delta / temperature)
-
-        if random.random() < accept_prob:
-            old_key = state_id(current_state)
+        if next_score > current_score:
             current_state = next_state
-            new_key = state_id(current_state)
-            ensure_map_entry(current_state)
-
-            if first_move_map[new_key] is None:
-                if old_key == root_key:
-                    first_move_map[new_key] = move_chosen
-                else:
-                    first_move_map[new_key] = first_move_map[old_key]
+            current_score = next_score
 
             if next_score > best_score:
                 best_score = next_score
-                best_state = copy.deepcopy(current_state)
-        else:
-            pass
-
-    best_key = state_id(best_state)
-    best_move = first_move_map.get(best_key, None)
+                best_move = move_chosen
 
     return best_move
