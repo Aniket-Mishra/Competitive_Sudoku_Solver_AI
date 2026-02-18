@@ -1,4 +1,10 @@
-# 2AMU10_Foundations_of_Artificial_Intelligence
+# Competitive Sudoku Solver AI agents
+##### Multiple agents that play competitive sudoku against each other. All created agents play against each other, and base agents like random and, greedy player.
+##### Benchmarks are performed to find the best agent.
+
+##### Course: 2AMU10: Foundations of Artificial Intelligence
+##### Associated with: Tu/e
+
 Repository for the code to create an AI agent to play competitive Sudoku.
 
 Main only contains the final code. Everything is in the branches. The branch names are weird, but rest assured, I tried.
